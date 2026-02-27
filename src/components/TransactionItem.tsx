@@ -3,7 +3,7 @@ import type { Transaction } from "../types/transaction";
 import useCategoryStore from "../stores/categoryStore";
 import { formatCurrency } from "../utils/formatCurrency";
 import { formatDateShort } from "../utils/dateUtils";
-import WhatsAppIcon from "./../assets/WhatsAppIcon";
+import WhatsAppIcon from "@/assets/WhatsAppIcon";
 
 interface TransactionItemProps {
   transaction: Transaction;

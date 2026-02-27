@@ -2,7 +2,6 @@ import { supabase } from "@/lib/supabase";
 import type {
   LoginRequest,
   RegisterRequest,
-  AuthResponse,
   User,
 } from "../types/auth";
 // import axiosInstance from './axiosInstance'; // descomentar cuando el backend esté listo
