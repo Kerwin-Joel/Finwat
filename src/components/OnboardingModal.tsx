@@ -12,8 +12,6 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 
-const ONBOARDING_KEY = "finwat_onboarding_done";
-
 const steps = [
   {
     icon: <Wallet size={48} className="text-primary" />,
@@ -65,11 +63,22 @@ const OnboardingModal = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [confirmed, setConfirmed] = useState(false);
+  const ONBOARDING_KEY = "finwat_onboarding_last_shown";
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
   useEffect(() => {
-    const done = localStorage.getItem(ONBOARDING_KEY);
-    if (!done) setIsOpen(true);
-  }, []);
+    const lastShown = localStorage.getItem(ONBOARDING_KEY);
+    const now = Date.now();
+
+    const shouldShow = !lastShown || now - parseInt(lastShown) > SEVEN_DAYS_MS;
+
+    if (shouldShow) {
+      const timer = setTimeout(() => {
+        setIsOpen(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [SEVEN_DAYS_MS]);
 
   const step = steps[currentStep];
   const isLast = currentStep === steps.length - 1;
@@ -79,7 +88,7 @@ const OnboardingModal = () => {
     if (requiresConfirmation && !confirmed) return;
     setConfirmed(false);
     if (isLast) {
-      localStorage.setItem(ONBOARDING_KEY, "true");
+      localStorage.setItem(ONBOARDING_KEY, Date.now().toString());
       setIsOpen(false);
     } else {
       setCurrentStep((prev) => prev + 1);
@@ -92,7 +101,7 @@ const OnboardingModal = () => {
   };
 
   const handleSkip = () => {
-    localStorage.setItem(ONBOARDING_KEY, "true");
+    localStorage.setItem(ONBOARDING_KEY, Date.now().toString());
     setIsOpen(false);
   };
 

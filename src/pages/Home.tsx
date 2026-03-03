@@ -19,6 +19,7 @@ import {
   SheetTrigger,
 } from "../components/ui/sheet";
 import type { TransactionFilters, SortOption } from "../types/transaction";
+import OnboardingModal from "@/components/OnboardingModal";
 
 const Home = () => {
   const { user, logout } = useAuthStore();
@@ -222,6 +223,7 @@ const Home = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
       />
+      <OnboardingModal />
     </div>
   );
 };
