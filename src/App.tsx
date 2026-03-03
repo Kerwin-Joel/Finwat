@@ -13,6 +13,7 @@ import Services from "./pages/Services";
 import Profile from "./pages/Profile";
 import { Toaster } from "./components/ui/toaster";
 import PublicRoute from "./components/layout/PublicRoute";
+import OnboardingModal from "./components/OnboardingModal";
 
 function App() {
   const initAuth = useAuthStore((state) => state.initAuth);
@@ -103,6 +104,7 @@ useEffect(() => {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />
+      <OnboardingModal />
     </BrowserRouter>
   );
 }

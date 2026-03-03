@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-sans: "Inter", system-ui, sans-serif;
 
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
@@ -88,4 +88,11 @@
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
   }
+}
+.PhoneInputCountrySelect {
+  @apply bg-background text-foreground border border-input rounded-md px-2 h-10 cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring;
+}
+
+.PhoneInputCountrySelectArrow {
+  @apply text-foreground ml-1;
 }
