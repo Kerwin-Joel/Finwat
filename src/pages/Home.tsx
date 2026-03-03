@@ -11,6 +11,7 @@ import AddTransactionModal from "../components/AddTransactionModal";
 import { SkeletonAccountCard } from "../components/SkeletonLoader";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
+
 import {
   Sheet,
   SheetContent,
@@ -18,8 +19,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "../components/ui/sheet";
-import type { TransactionFilters, SortOption } from "../types/transaction";
+import type {
+  TransactionFilters,
+  SortOption,
+  Transaction,
+} from "../types/transaction";
 import OnboardingModal from "@/components/OnboardingModal";
+import EditTransactionModal from "@/components/EditTransactionModal";
 
 const Home = () => {
   const { user, logout } = useAuthStore();
@@ -58,7 +64,7 @@ const Home = () => {
   // The user requirement says "If multiple accounts exist, show the first account or a consolidated summary."
   // I'll show the first account for simplicity, or a dummy "Total" account if I had logic for it.
   // Let's pick the first account.
-    const mainAccount = accounts[0];
+  const mainAccount = accounts[0];
 
   //   const totalIncome = transactions
   //     .filter((t) => t.type === "income")
@@ -114,6 +120,19 @@ const Home = () => {
       // Show bottom shadow if we are not at the very bottom (with a small buffer)
       setShowBottomShadow(scrollHeight - scrollTop - clientHeight > 10);
     }
+  };
+
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<Transaction | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const handleTransactionClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsEditModalOpen(true);
+  };
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedTransaction(null);
   };
 
   // Check scroll state initially and on transactions change
@@ -204,7 +223,13 @@ const Home = () => {
             sortOption={localSortOption}
             onSortChange={setLocalSortOption}
             showScrollShadow={showTopShadow}
-            limit={20}
+            onTransactionClick={handleTransactionClick}
+            limit={10}
+          />
+          <EditTransactionModal
+            isOpen={isEditModalOpen}
+            onClose={handleCloseEditModal}
+            transaction={selectedTransaction}
           />
         </div>
 
