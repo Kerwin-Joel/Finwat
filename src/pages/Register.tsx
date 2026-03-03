@@ -15,7 +15,6 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { useToast } from "../hooks/use-toast";
-import PhoneInput from "react-phone-number-input";
 import PhoneInputField from "../components/ui/phone-input";
 import "react-phone-number-input/style.css";
 
