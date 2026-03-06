@@ -13,6 +13,8 @@ import Services from "./pages/Services";
 import Profile from "./pages/Profile";
 import { Toaster } from "./components/ui/toaster";
 import PublicRoute from "./components/layout/PublicRoute";
+import ForgotPassword from "./pages/ForgotPassword";
+import SplashScreen from "./components/SplashScreen";
 
 function App() {
   const initAuth = useAuthStore((state) => state.initAuth);
@@ -20,9 +22,9 @@ function App() {
   const customColors = useThemeStore((state) => state.customColors);
 
   // Initialize auth on mount
-useEffect(() => {
-  initAuth(); // se llama UNA SOLA VEZ cuando la app monta
-}, [initAuth]);
+  useEffect(() => {
+    initAuth(); // se llama UNA SOLA VEZ cuando la app monta
+  }, [initAuth]);
 
   // Effect to apply theme
   useEffect(() => {
@@ -69,6 +71,7 @@ useEffect(() => {
         without a location hook wrapper. The AppLayout handles the page transition animation.
        */}
       <Routes>
+        <Route path="/splash" element={<SplashScreen />} />
         <Route
           path="/login"
           element={
@@ -86,6 +89,7 @@ useEffect(() => {
             </PublicRoute>
           }
         />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route
           path="/"
           element={

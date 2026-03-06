@@ -17,6 +17,7 @@ import {
 import { useToast } from "../hooks/use-toast";
 import PhoneInputField from "../components/ui/phone-input";
 import "react-phone-number-input/style.css";
+import FinwatLogo from "@/assets/FinwatLogo";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -59,10 +60,13 @@ const Register = () => {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-primary mb-2">
-            FinWat
+          <h1 className="text-4xl font-bold tracking-tight text-primary mb-2 flex items-center justify-center gap-1">
+            <FinwatLogo size={40} />
+            inwat
           </h1>
-          <p className="text-muted-foreground">Únete y toma el control</p>
+          <p className="text-sm font-medium bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+            Únete y toma el control.
+          </p>
         </div>
 
         <Card className="border-border/50 shadow-xl bg-card/50 backdrop-blur-sm">
@@ -94,15 +98,6 @@ const Register = () => {
                 />
               </div>
               <div className="space-y-2">
-                {/* <Label htmlFor="phone">Celular</Label>
-                                <Input
-                                    id="phone"
-                                    type="tel"
-                                    placeholder="987654321"
-                                    value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
-                                    required
-                                /> */}
                 <Label>Celular</Label>
                 <PhoneInputField
                   value={phone}
