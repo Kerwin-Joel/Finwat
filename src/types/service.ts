@@ -11,20 +11,21 @@ export type ServiceCategory =
 export type ServiceStatus = 'DISPONIBLE' | 'EN_PROCESO' | 'COMPLETADO' | 'SUSPENDIDO';
 
 export interface FinancialService {
-    id: string;
-    category: ServiceCategory;
-    title: string;
-    description: string;
-    longDescription: string;
-    icon: string;
-    price?: number;
-    currency?: string;
-    status: ServiceStatus;
-    estimatedTime: string;
-    requirements: string[];
-    tags: string[];
-    rating?: number;
-    reviewCount?: number;
+  id: string;
+  category: ServiceCategory;
+  title: string;
+  description: string;
+  longDescription: string;
+  icon: string;
+  price?: number;
+  currency?: string;
+  status: ServiceStatus;
+  estimatedTime: string;
+  requirements: string[];
+  tags: string[];
+  rating?: number;
+  reviewCount?: number;
+  comingSoon?: boolean;
 }
 
 export interface ServiceRequestPayload {
