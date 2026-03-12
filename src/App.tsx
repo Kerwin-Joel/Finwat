@@ -8,7 +8,6 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Transactions from "./pages/Transactions";
-import Accounts from "./pages/Accounts";
 import Services from "./pages/Services";
 import Profile from "./pages/Profile";
 import { Toaster } from "./components/ui/toaster";
