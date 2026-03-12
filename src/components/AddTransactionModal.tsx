@@ -26,19 +26,6 @@ import type {
 } from "../types/transaction";
 
 // shadcn utils alias workaround if not using `@/lib/utils`
-// Ensure this path matches where shadcn utils are. Usually `src/lib/utils.ts` or `src/utils/utils.ts`?
-// The user asked for `src/utils` structure. Shadcn default is `src/lib/utils`.
-// I'll assume I need to create `src/lib/utils.ts` OR import from where standard shadcn put it.
-// Checking file listing earlier: shadcn usually creates `lib/utils` or `utils/cn`.
-// I will assume `lib/utils` exists if standard init ran, OR I should create it to be safe.
-// Wait, I ran `add button` etc. `add` commands create `lib/utils.ts` if it doesn't exist?
-// My `components.json` pointed utils to `@/utils`. So it should be in `src/utils`.
-// But I haven't seen `src/utils/cn.ts` or `utils.ts` created yet.
-// I should verify where `clsx` helper is.
-// I will check `src/utils` content in next step or just implement a local `cn` here if needed, but better to use the one from shadcn.
-// For now, I'll import from `../lib/utils` (default) or `../utils/utils` (if I configured it).
-// My components.json said `"utils": "@/utils"`. So shadcn *should* have created `src/utils/cn.ts` or similar when I installed `button`.
-// I will check `src/utils` in a moment. For now I'll import from `../lib/utils` as a fallback or `../utils`.
 
 interface AddTransactionModalProps {
   isOpen: boolean;
@@ -54,8 +41,6 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   const { categories } = useCategoryStore();
   const { toast } = useToast();
 
-  // const [type, setType] = useState<TransactionType>('expense');
-  // const [amount, setAmount] = useState('');
   const [type, setType] = useState<TransactionType>("expense");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -157,7 +142,11 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             <Label htmlFor="description">Descripción</Label>
             <Input
               id="description"
-              placeholder="¿Qué compraste?"
+              placeholder={
+                type === "expense"
+                  ? "💸 ¿A dónde se fue tu plata?"
+                  : "🤑 ¿De dónde cayó este billete?"
+              }
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               required
