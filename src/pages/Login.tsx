@@ -14,7 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
-import { useToast } from "../hooks/use-toast";
 import FinwatLogo from "@/assets/FinwatLogo";
 
 const Login = () => {
@@ -24,7 +23,6 @@ const Login = () => {
   const [loginError, setLoginError] = useState("");
   const { login, isLoading } = useAuthStore();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
