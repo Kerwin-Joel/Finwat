@@ -45,7 +45,7 @@ const FABButton: React.FC<FABButtonProps> = ({ onClick }) => {
     onClick();
   };
 
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=Hola%20FinWat%2C%20quiero%20registrar%20un%20movimiento`;
+  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}`;
 
   return (
     <>
