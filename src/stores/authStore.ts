@@ -41,6 +41,7 @@ const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
   error: null,
   isAuthenticated: false,
+  isInitializing: true,
 
   //   ok
   initAuth: () => {
