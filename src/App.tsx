@@ -15,6 +15,7 @@ import { Toaster } from "./components/ui/toaster";
 import PublicRoute from "./components/layout/PublicRoute";
 import ForgotPassword from "./pages/ForgotPassword";
 import SplashScreen from "./components/SplashScreen";
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   const initAuth = useAuthStore((state) => state.initAuth);
@@ -80,6 +81,7 @@ function App() {
             </PublicRoute>
           }
         />
+        <Route path="/reset-password" element={<ResetPassword />} />
         {/* <Route path="/login" element={<TestAuth />} /> */}
         <Route
           path="/register"
