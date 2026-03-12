@@ -144,8 +144,8 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               id="description"
               placeholder={
                 type === "expense"
-                  ? "💸 ¿A dónde se fue tu plata?"
-                  : "🤑 ¿De dónde cayó este billete?"
+                  ? "💸 ¿A dónde se fue tu platita?"
+                  : "🤑 ¿De dónde cayó este billuyo?"
               }
               value={description}
               onChange={(e) => setDescription(e.target.value)}
