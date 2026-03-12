@@ -16,6 +16,7 @@ import PublicRoute from "./components/layout/PublicRoute";
 import ForgotPassword from "./pages/ForgotPassword";
 import SplashScreen from "./components/SplashScreen";
 import ResetPassword from "./pages/ResetPassword";
+import Analytics from "./pages/Analytics";
 
 function App() {
   const initAuth = useAuthStore((state) => state.initAuth);
@@ -102,7 +103,7 @@ function App() {
         >
           <Route index element={<Home />} />
           <Route path="transactions" element={<Transactions />} />
-          <Route path="accounts" element={<Accounts />} />
+          <Route path="accounts" element={<Analytics />} />
           <Route path="services" element={<Services />} />
           <Route path="profile" element={<Profile />} />
         </Route>
