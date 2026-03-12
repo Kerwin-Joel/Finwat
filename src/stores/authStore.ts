@@ -19,6 +19,7 @@ interface AuthState {
   setUser: (user: User | null) => void;
   clearError: () => void;
   initAuth: () => void;
+  isInitializing: boolean; // solo para la carga inicial
 }
 
 const mapUser = (user: any): User | null => {
@@ -43,30 +44,16 @@ const useAuthStore = create<AuthState>((set) => ({
 
   //   ok
   initAuth: () => {
-    // const token = localStorage.getItem("finwat_token");
-    // const userStr = localStorage.getItem("finwat_user");
-    // if (token && userStr) {
-    //   try {
-    //     const user = JSON.parse(userStr) as User;
-    //     set({ user, token, isAuthenticated: true });
-    //   } catch {
-    //     localStorage.removeItem("finwat_token");
-    //     localStorage.removeItem("finwat_user");
-    //   }
-    //   }
-    // supabase.auth.onAuthStateChange((_event, session) => {
-    //   // Esto se ejecuta automáticamente cada vez que:
-    //   // - El usuario hace login
-    //   // - El usuario hace logout
-    //   // - El token expira y se refresca
-    //   set({
-    //     user: mapUser(session?.user ?? null),
-    //     token: session?.access_token ?? null,
-    //     isAuthenticated: !!session,
-    //     isLoading: false,
-    //   });
-    // });
-
+    set({ isInitializing: true });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      set({
+        user: mapUser(session?.user ?? null),
+        token: session?.access_token ?? null,
+        isAuthenticated: !!session,
+        isLoading: false,
+        isInitializing: false, // ✅
+      });
+    });
     supabase.auth.getSession().then(({ data: { session } }) => {
       set({
         user: mapUser(session?.user ?? null),
@@ -89,7 +76,6 @@ const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const data = await login(credentials);
-      console.log(data);
       set({
         user: mapUser(data.user),
         token: data.session?.access_token || null,
@@ -100,7 +86,10 @@ const useAuthStore = create<AuthState>((set) => ({
       set({
         error: err instanceof Error ? err.message : "Error al iniciar sesión",
         isLoading: false,
+        isAuthenticated: false, // ✅ asegura que no se autentique
+        user: null,
       });
+      throw err;
     }
   },
   //   ok
@@ -128,41 +117,22 @@ const useAuthStore = create<AuthState>((set) => ({
   },
 
   updateUserProfile: async (data) => {
-    // set({ isLoading: true, error: null });
-    // try {
-    //   // MOCK - simulate API call
-    //   await new Promise((resolve) => setTimeout(resolve, 800));
-    //   const currentUser = useAuthStore.getState().user;
-    //   if (!currentUser) throw new Error("No user logged in");
+    set({ isLoading: true, error: null });
+    try {
+      await updateProfile(data);
+      const currentUser = useAuthStore.getState().user;
+      if (!currentUser) throw new Error("No user logged in");
 
-    //   const updatedUser = { ...currentUser, ...data };
-    //   localStorage.setItem("finwat_user", JSON.stringify(updatedUser));
-    //   set({ user: updatedUser, isLoading: false });
-    // } catch (err) {
-    //   set({
-    //     error:
-    //       err instanceof Error ? err.message : "Error al actualizar perfil",
-    //     isLoading: false,
-    //   });
-    //   throw err;
-      // }
-      
-      set({ isLoading: true, error: null });
-      try {
-        await updateProfile(data);
-        const currentUser = useAuthStore.getState().user;
-        if (!currentUser) throw new Error("No user logged in");
-
-        const updatedUser = { ...currentUser, ...data };
-        set({ user: updatedUser, isLoading: false });
-      } catch (err) {
-        set({
-          error:
-            err instanceof Error ? err.message : "Error al actualizar perfil",
-          isLoading: false,
-        });
-        throw err;
-      }
+      const updatedUser = { ...currentUser, ...data };
+      set({ user: updatedUser, isLoading: false });
+    } catch (err) {
+      set({
+        error:
+          err instanceof Error ? err.message : "Error al actualizar perfil",
+        isLoading: false,
+      });
+      throw err;
+    }
   },
 
   changePassword: async (oldPassword, newPassword) => {

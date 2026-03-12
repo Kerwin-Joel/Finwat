@@ -21,6 +21,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState("");
   const { login, isLoading } = useAuthStore();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -28,19 +29,15 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
+    setLoginError("");
 
     try {
       await login({ email, password });
       navigate("/splash");
-    } catch (error) {
-      toast({
-        title: "Error al iniciar sesión",
-        description:
-          error instanceof Error ? error.message : "Credenciales inválidas",
-        variant: "destructive",
-      });
+    } catch {
+      setLoginError("Correo o contraseña incorrectos. Intenta de nuevo.");
     }
-  };
+  };;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -99,6 +96,16 @@ const Login = () => {
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+                {loginError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-3 py-2 rounded-lg"
+                  >
+                    <span>⚠️</span>
+                    <span>{loginError}</span>
+                  </motion.div>
+                )}
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
