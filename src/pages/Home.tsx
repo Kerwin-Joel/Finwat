@@ -26,8 +26,12 @@ import type {
 } from "../types/transaction";
 import OnboardingModal from "@/components/OnboardingModal";
 import EditTransactionModal from "@/components/EditTransactionModal";
+import { Bell, DollarSign, FileText, Users, Target } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
+  // Dentro del componente agrega:
+  const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const {
     accounts,
@@ -169,7 +173,72 @@ const Home = () => {
               <SheetHeader>
                 <SheetTitle>Menú</SheetTitle>
               </SheetHeader>
-              <div className="py-6 space-y-4">
+              <div className="py-6 space-y-2">
+                {/* Secciones */}
+                <p className="text-xs text-muted-foreground px-2 pb-1">
+                  Secciones
+                </p>
+
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-3"
+                  onClick={() => navigate("reminders")}
+                >
+                  <Bell className="h-4 w-4 text-blue-400" />
+                  Recordatorios
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-3 opacity-50"
+                  disabled
+                >
+                  <DollarSign className="h-4 w-4 text-green-400" />
+                  Préstamos
+                  <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full">
+                    Pronto
+                  </span>
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-3 opacity-50"
+                  disabled
+                >
+                  <FileText className="h-4 w-4 text-yellow-400" />
+                  Reportes
+                  <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full">
+                    Pronto
+                  </span>
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-3 opacity-50"
+                  disabled
+                >
+                  <Users className="h-4 w-4 text-purple-400" />
+                  Deudas Compartidas
+                  <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full">
+                    Pronto
+                  </span>
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-3 opacity-50"
+                  disabled
+                >
+                  <Target className="h-4 w-4 text-pink-400" />
+                  Metas de Ahorro
+                  <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full">
+                    Pronto
+                  </span>
+                </Button>
+
+                <div className="border-t border-border my-3" />
+
+                {/* Acciones */}
                 <Button
                   variant="outline"
                   className="w-full justify-start"
