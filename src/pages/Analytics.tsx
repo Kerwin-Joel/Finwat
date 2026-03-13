@@ -42,11 +42,15 @@ import {
   subMonths,
   startOfWeek,
   startOfMonth,
-  isAfter,
   parseISO,
 } from "date-fns";
 import { es } from "date-fns/locale";
 import type { Transaction } from "../types/transaction";
+import { supabase } from "../lib/supabase";
+import useAuthStore from "../stores/authStore";
+import { Input } from "../components/ui/input";
+import BudgetEditor from "../components/BudgetEditor";
+import { Button } from "@/components/ui/button";
 
 type Period = "today" | "week" | "biweekly" | "month" | "3months";
 
@@ -73,7 +77,10 @@ const getPeriodRange = (period: Period): { start: Date; end: Date } => {
   const now = new Date();
   switch (period) {
     case "today":
-      return { start: new Date(new Date().setHours(0, 0, 0, 0)), end: now };
+      return {
+        start: new Date(new Date().setHours(0, 0, 0, 0) - 1),
+        end: new Date(),
+      };
     case "week":
       return { start: startOfWeek(now, { weekStartsOn: 1 }), end: now };
     case "biweekly":
@@ -88,7 +95,7 @@ const getPeriodRange = (period: Period): { start: Date; end: Date } => {
 const filterByRange = (txs: Transaction[], start: Date, end: Date) =>
   txs.filter((t) => {
     const d = parseISO(t.transaction_date);
-    return isAfter(d, start) && !isAfter(d, end);
+    return d >= start && d <= end;
   });
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -108,21 +115,98 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function Analytics() {
   const { transactions, fetchTransactions } = useTransactionStore();
   const [period, setPeriod] = useState<Period>("month");
-  const savingsGoal = 500;
+  const [savingsGoal, setSavingsGoal] = useState(500);
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalInput, setGoalInput] = useState("500");
+  const { user } = useAuthStore();
+  const [categoryBudgets, setCategoryBudgets] = useState<
+    Record<string, number>
+  >({});
+  const [showBudgetEditor, setShowBudgetEditor] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from("profiles")
+      .select("category_budgets")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.category_budgets) setCategoryBudgets(data.category_budgets);
+      });
+  }, [user?.id]);
+  // Cargar meta al inicio
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from("profiles")
+      .select("savings_goal")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.savings_goal) {
+          setSavingsGoal(data.savings_goal);
+          setGoalInput(data.savings_goal.toString());
+        }
+      });
+  }, [user?.id]);
+
+  const saveGoal = async () => {
+    const val = parseFloat(goalInput);
+    if (!val || val <= 0 || !user?.id) return;
+    setSavingsGoal(val);
+    setEditingGoal(false);
+    await supabase
+      .from("profiles")
+      .update({ savings_goal: val })
+      .eq("id", user.id);
+  };
 
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
-
+  // ✅ Agrega aquí
+  useEffect(() => {
+    if (!user?.id) {
+      console.log("❌ No user id yet");
+      return;
+    }
+    console.log("✅ Loading budgets for user:", user.id);
+    supabase
+      .from("profiles")
+      .select("category_budgets")
+      .eq("id", user.id)
+      .single()
+      .then(({ data, error }) => {
+        console.log("raw data:", JSON.stringify(data));
+        console.log(
+          "category_budgets:",
+          JSON.stringify(data?.category_budgets),
+        );
+        if (
+          data?.category_budgets &&
+          Object.keys(data.category_budgets).length > 0
+        ) {
+          setCategoryBudgets(data.category_budgets);
+        }
+      });
+  }, [user?.id]);
   const { start, end } = useMemo(() => getPeriodRange(period), [period]);
 
-  const { prevStart, prevEnd } = useMemo(
-    () => ({
+  const { prevStart, prevEnd } = useMemo(() => {
+    if (period === "today") {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      return {
+        prevStart: new Date(yesterday.setHours(0, 0, 0, 0) - 1),
+        prevEnd: new Date(new Date().setHours(0, 0, 0, 0)),
+      };
+    }
+    return {
       prevStart: new Date(start.getTime() - (end.getTime() - start.getTime())),
       prevEnd: start,
-    }),
-    [start, end],
-  );
+    };
+  }, [period, start, end]);
 
   const filtered = useMemo(
     () => filterByRange(transactions, start, end),
@@ -295,13 +379,26 @@ export default function Analytics() {
     const topCat = topCategories[0];
     if (!topCat || totalExpenses === 0)
       return "Registra más movimientos para obtener insights personalizados.";
+
+    const budget = categoryBudgets[topCat[0]];
+    if (budget && budget > 0) {
+      const pct = ((topCat[1] / budget) * 100).toFixed(0);
+      return `Gastaste ${pct}% de tu presupuesto en ${CATEGORY_LABELS[topCat[0]]?.label ?? topCat[0]} (S/. ${topCat[1].toFixed(0)} de S/. ${budget}). ${
+        Number(pct) > 80
+          ? "⚠️ Estás cerca del límite."
+          : Number(pct) > 100
+            ? "🚨 Superaste tu presupuesto."
+            : "✅ Vas bien."
+      }`;
+    }
+
     const pct = ((topCat[1] / totalExpenses) * 100).toFixed(0);
-    return `Estás gastando el ${pct}% de tu presupuesto en ${CATEGORY_LABELS[topCat[0]]?.label ?? topCat[0]}. ${
+    return `Gastaste el ${pct}% de tus gastos totales en ${CATEGORY_LABELS[topCat[0]]?.label ?? topCat[0]}. ${
       Number(pct) > 40
-        ? "Considera reducir este gasto."
-        : "¡Buen control de gastos!"
+        ? "Es tu categoría dominante."
+        : "Buen balance de gastos."
     }`;
-  }, [topCategories, totalExpenses]);
+  }, [topCategories, totalExpenses, categoryBudgets]);
 
   const savingsPct = Math.min(100, (netBalance / savingsGoal) * 100);
 
@@ -427,6 +524,24 @@ export default function Analytics() {
             </CardContent>
           </Card>
         </motion.div>
+
+        <motion.div variants={fadeUp}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full text-xs gap-2"
+            onClick={() => setShowBudgetEditor(true)}
+          >
+            <Target size={13} /> Editar presupuesto por categoría
+          </Button>
+        </motion.div>
+
+        <BudgetEditor
+          isOpen={showBudgetEditor}
+          onClose={() => setShowBudgetEditor(false)}
+          budgets={categoryBudgets}
+          onSave={setCategoryBudgets}
+        />
 
         {/* Ingresos vs Gastos */}
         <motion.div variants={fadeUp}>
@@ -685,9 +800,36 @@ export default function Analytics() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold">Meta de Ahorro</p>
-                    <p className="text-[10px] text-muted-foreground">
-                      Objetivo: {formatCurrency(savingsGoal)}
-                    </p>
+                    {editingGoal ? (
+                      <div className="flex items-center gap-1 mt-1">
+                        <Input
+                          type="number"
+                          value={goalInput}
+                          onChange={(e) => setGoalInput(e.target.value)}
+                          className="h-6 w-24 text-xs px-2"
+                          autoFocus
+                        />
+                        <button
+                          onClick={saveGoal}
+                          className="text-[10px] text-green-500 font-semibold"
+                        >
+                          Guardar
+                        </button>
+                        <button
+                          onClick={() => setEditingGoal(false)}
+                          className="text-[10px] text-muted-foreground"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setEditingGoal(true)}
+                        className="text-[10px] text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        Objetivo: {formatCurrency(savingsGoal)} ✏️
+                      </button>
+                    )}
                   </div>
                 </div>
                 <span

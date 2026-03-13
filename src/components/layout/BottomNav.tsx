@@ -11,7 +11,7 @@ const BottomNav = () => {
         { icon: Home, label: 'Home', path: ROUTES.HOME },
         { icon: Receipt, label: 'Movimientos', path: ROUTES.TRANSACTIONS },
         { icon: Zap, label: 'Servicios', path: ROUTES.SERVICES },
-        { icon: Wallet, label: 'Cuentas', path: ROUTES.ACCOUNTS },
+        { icon: Wallet, label: 'Analisis', path: ROUTES.ACCOUNTS },
         { icon: User, label: 'Perfil', path: ROUTES.PROFILE },
     ];
 
