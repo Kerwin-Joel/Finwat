@@ -1,9 +1,18 @@
 import { Outlet, useLocation } from "react-router-dom";
 import BottomNav from "./BottomNav";
 import { motion, AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
+import useAuthStore from "@/stores/authStore";
+import useCategoryStore from "@/stores/categoryStore";
 
 const AppLayout = () => {
   const location = useLocation();
+  const { user } = useAuthStore();
+  const { loadCustomCategories } = useCategoryStore();
+
+  useEffect(() => {
+    if (user?.id) loadCustomCategories(user.id);
+  }, [user?.id]);
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20 relative overflow-hidden">
