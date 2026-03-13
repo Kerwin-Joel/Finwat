@@ -177,7 +177,7 @@ export default function Analytics() {
       .select("category_budgets")
       .eq("id", user.id)
       .single()
-      .then(({ data, error }) => {
+      .then(({ data }) => {
         console.log("raw data:", JSON.stringify(data));
         console.log(
           "category_budgets:",
