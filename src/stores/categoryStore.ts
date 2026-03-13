@@ -56,7 +56,7 @@ const useCategoryStore = create<CategoryState>()(
           data?.custom_categories &&
           Object.keys(data.custom_categories).length > 0
         ) {
-          set((state) => ({
+          set(() => ({
             categories: { ...CATEGORIES, ...data.custom_categories },
           }));
         }
