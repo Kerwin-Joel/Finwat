@@ -190,14 +190,11 @@ const Home = () => {
 
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-3 opacity-50"
-                  disabled
+                  className="w-full justify-start gap-3"
+                  onClick={() => navigate("loans")}
                 >
                   <DollarSign className="h-4 w-4 text-green-400" />
                   Préstamos
-                  <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full">
-                    Pronto
-                  </span>
                 </Button>
 
                 <Button

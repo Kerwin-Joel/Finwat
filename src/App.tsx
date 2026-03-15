@@ -17,6 +17,7 @@ import SplashScreen from "./components/SplashScreen";
 import ResetPassword from "./pages/ResetPassword";
 import Analytics from "./pages/Analytics";
 import Reminders from "./pages/Reminders";
+import Loans from "./pages/Loans";
 
 function App() {
   const initAuth = useAuthStore((state) => state.initAuth);
@@ -107,6 +108,7 @@ function App() {
           <Route path="services" element={<Services />} />
           <Route path="profile" element={<Profile />} />
           <Route path="reminders" element={<Reminders />} />
+          <Route path="loans" element={<Loans />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
