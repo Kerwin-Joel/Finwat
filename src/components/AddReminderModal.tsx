@@ -84,12 +84,22 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
     if (!user?.id) return;
     setSaving(true);
     try {
+      // Convertir hora local a UTC
+      let dueDateFinal = dueDate;
+      let dueTimeFinal: string | undefined = undefined;
+
+      if (hasTime && dueTime) {
+        const localDateTime = new Date(`${dueDate}T${dueTime}:00`);
+        dueDateFinal = localDateTime.toISOString().split("T")[0];
+        dueTimeFinal = localDateTime.toISOString().split("T")[1].slice(0, 8);
+      }
+
       const reminder = await reminderService.create(user.id, {
         title: title.trim(),
         type,
         amount: amount ? parseFloat(amount) : undefined,
-        due_date: dueDate,
-        due_time: hasTime && dueTime ? dueTime : undefined,
+        due_date: dueDateFinal,
+        due_time: dueTimeFinal,
         notify_advance: notifyAdvance,
         recurrence,
         notes: notes.trim() || undefined,
