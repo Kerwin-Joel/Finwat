@@ -18,7 +18,6 @@ import {
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "../hooks/use-toast";
-import useAuthStore from "../stores/authStore";
 import { loanService } from "../api/loanService";
 import type {
   Loan,
@@ -48,7 +47,6 @@ const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
   onUpdated,
   onDeleted,
 }) => {
-  const { user } = useAuthStore();
   const { toast } = useToast();
 
   const [payments, setPayments] = useState<LoanPayment[]>([]);
@@ -114,7 +112,6 @@ const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
             ? parseFloat(editInstallmentAmount)
             : undefined,
         },
-        user!.id,
       );
       const updated = await loanService.getById(loan.id);
       onUpdated(updated);
