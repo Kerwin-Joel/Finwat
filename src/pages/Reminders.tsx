@@ -158,7 +158,7 @@ const Reminders = () => {
                         locale: es,
                       })}
                       {reminder.due_time &&
-                        ` · ${reminder.due_time.slice(0, 5)}`}
+                        ` · ${new Date(`${reminder.due_date}T${reminder.due_time}`).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: true })}`}
                     </span>
                     {reminder.notify_advance > 0 && (
                       <span className="text-[10px] text-muted-foreground">
