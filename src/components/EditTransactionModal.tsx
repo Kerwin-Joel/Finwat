@@ -25,7 +25,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { useToast } from "../hooks/use-toast";
 import useTransactionStore from "../stores/transactionStore";
 import useAccountStore from "../stores/accountStore";
-import { CATEGORIES } from "../constants/categories";
 import type {
   Transaction,
   TransactionCategory,
@@ -102,7 +101,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
       onClose();
     } catch (error) {
       toast({
-        title: "Error",
+        title: "Error: " + error,
         description: "No se pudo actualizar el movimiento.",
         variant: "destructive",
       });
@@ -123,7 +122,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
       onClose();
     } catch (error) {
       toast({
-        title: "Error",
+        title: "Error: " + error,
         description: "No se pudo eliminar el movimiento.",
         variant: "destructive",
       });
