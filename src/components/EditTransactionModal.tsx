@@ -42,6 +42,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import useCategoryStore from "../stores/categoryStore";
 
 interface EditTransactionModalProps {
   isOpen: boolean;
@@ -66,6 +67,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
   const [date, setDate] = useState<Date>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { categories } = useCategoryStore();
 
   useEffect(() => {
     if (transaction) {
@@ -198,11 +200,24 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(CATEGORIES).map(([key, { label }]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
+                  {Object.entries(categories).map(
+                    ([key, { label, icon, type }]) => (
+                      <SelectItem key={key} value={key}>
+                        <div className="flex items-center">
+                          {type === "image" ? (
+                            <img
+                              src={icon}
+                              alt=""
+                              className="w-5 h-5 mr-2 rounded-full object-cover"
+                            />
+                          ) : (
+                            <span className="mr-2">{icon}</span>
+                          )}
+                          {label}
+                        </div>
+                      </SelectItem>
+                    ),
+                  )}
                 </SelectContent>
               </Select>
             </div>

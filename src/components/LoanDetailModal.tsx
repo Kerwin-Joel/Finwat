@@ -9,21 +9,12 @@ import { Progress } from "./ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { Card, CardContent } from "./ui/card";
 import { Separator } from "./ui/separator";
-import {
-  Edit2,
-  Trash2,
-  Plus,
-  CreditCard,
-} from "lucide-react";
+import { Edit2, Trash2, Plus, CreditCard } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "../hooks/use-toast";
 import { loanService } from "../api/loanService";
-import type {
-  Loan,
-  LoanPayment,
-  LoanHistory,
-} from "../types/loan";
+import type { Loan, LoanPayment, LoanHistory } from "../types/loan";
 import {
   LOAN_TYPE_CONFIG,
   LOAN_STATUS_CONFIG,
@@ -74,10 +65,14 @@ const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
 
   const typeConf = LOAN_TYPE_CONFIG[loan.type];
   const statusConf = LOAN_STATUS_CONFIG[loan.status];
-  const progress =
-    loan.principal > 0
-      ? ((loan.principal - loan.balance_remaining) / loan.principal) * 100
-      : 100;
+
+  const totalExpected =
+    loan.installment_amount && loan.installments_total
+      ? loan.installment_amount * loan.installments_total
+      : loan.principal;
+
+  const totalPaid = totalExpected - loan.balance_remaining;
+  const progress = totalExpected > 0 ? (totalPaid / totalExpected) * 100 : 0;
 
   useEffect(() => {
     if (isOpen) loadPaymentsAndHistory();
@@ -102,17 +97,14 @@ const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
   const handleSaveEdit = async () => {
     setSaving(true);
     try {
-      await loanService.update(
-        loan.id,
-        {
-          entity_name: editEntityName.trim(),
-          notes: editNotes.trim() || undefined,
-          due_date: editDueDate || undefined,
-          installment_amount: editInstallmentAmount
-            ? parseFloat(editInstallmentAmount)
-            : undefined,
-        },
-      );
+      await loanService.update(loan.id, {
+        entity_name: editEntityName.trim(),
+        notes: editNotes.trim() || undefined,
+        due_date: editDueDate || undefined,
+        installment_amount: editInstallmentAmount
+          ? parseFloat(editInstallmentAmount)
+          : undefined,
+      });
       const updated = await loanService.getById(loan.id);
       onUpdated(updated);
       setIsEditing(false);
@@ -228,9 +220,11 @@ const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
             <div className="grid grid-cols-3 gap-3">
               <Card className="border-border/50">
                 <CardContent className="p-3 text-center">
-                  <p className="text-[10px] text-muted-foreground">Principal</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Total a pagar
+                  </p>
                   <p className="text-sm font-bold">
-                    {formatCurrency(loan.principal)}
+                    {formatCurrency(totalExpected)}
                   </p>
                 </CardContent>
               </Card>
@@ -238,7 +232,7 @@ const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
                 <CardContent className="p-3 text-center">
                   <p className="text-[10px] text-muted-foreground">Pagado</p>
                   <p className="text-sm font-bold text-green-500">
-                    {formatCurrency(loan.principal - loan.balance_remaining)}
+                    {formatCurrency(Math.max(0, totalPaid))}
                   </p>
                 </CardContent>
               </Card>

@@ -33,12 +33,19 @@ export const loanService = {
   async create(userId: string, dto: CreateLoanDTO): Promise<Loan> {
     const { bank_details, ...loanData } = dto;
 
+    const installments = loanData.installments_total ?? 1;
+    const installmentAmt = loanData.installment_amount ?? 0;
+
+    // balance_remaining = total real a pagar (cuotas × monto por cuota)
+    const totalBalance =
+      installmentAmt > 0 ? installmentAmt * installments : loanData.principal;
+
     const { data: loan, error } = await supabase
       .from("loans")
       .insert({
         ...loanData,
         user_id: userId,
-        balance_remaining: loanData.principal,
+        balance_remaining: totalBalance,
       })
       .select()
       .single();
@@ -52,7 +59,7 @@ export const loanService = {
     }
 
     // Generar cronograma automático si tiene cuotas
-    if (loan.installments_total > 1 && loan.installment_amount) {
+    if (loan.installments_total >= 1 && loan.installment_amount) {
       await loanService.generateInstallments(loan);
     }
 

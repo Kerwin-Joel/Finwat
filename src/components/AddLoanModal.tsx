@@ -138,7 +138,7 @@ const AddLoanModal: React.FC<AddLoanModalProps> = ({
         installments_total: parseInt(installmentsTotal) || 1,
         installment_amount: installmentAmount
           ? parseFloat(installmentAmount)
-          : undefined,
+          : calcInstallmentAmount(),
         notes: notes.trim() || undefined,
         bank_details:
           type === "bank"
@@ -161,6 +161,16 @@ const AddLoanModal: React.FC<AddLoanModalProps> = ({
     } finally {
       setSaving(false);
     }
+  };
+
+  const calcInstallmentAmount = () => {
+    if (!principal) return 0;
+    const p = parseFloat(principal);
+    const rate = interestRate ? parseFloat(interestRate) / 100 : 0;
+    const n = parseInt(installmentsTotal) || 1;
+    if (rate === 0) return p / n;
+    if (interestType === "simple") return (p + p * rate * n) / n;
+    return (p * Math.pow(1 + rate, n) * rate) / (Math.pow(1 + rate, n) - 1);
   };
 
   return (
@@ -443,6 +453,12 @@ const AddLoanModal: React.FC<AddLoanModalProps> = ({
                       </span>
                     </div>
                   )}
+                  {
+                    <div className="flex justify-between text-xs font-semibold border-t border-border pt-1 mt-1">
+                      <span>Cuota estimada</span>
+                      <span>S/. {calcInstallmentAmount().toFixed(2)}</span>
+                    </div>
+                  }
                 </div>
               )}
             </>
