@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { CalendarIcon, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 import {
@@ -20,8 +19,7 @@ import {
 } from "./ui/select";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Calendar } from "./ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { DatePicker } from "./ui/calendar";
 import { useToast } from "../hooks/use-toast";
 import useTransactionStore from "../stores/transactionStore";
 import useAccountStore from "../stores/accountStore";
@@ -42,6 +40,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import useCategoryStore from "../stores/categoryStore";
+import { parseDate } from "@/utils/dateUtils";
 
 interface EditTransactionModalProps {
   isOpen: boolean;
@@ -76,7 +75,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
       setDescription(transaction.description ?? "");
       setCategory(transaction.category);
       setAccountId(transaction.account_id); // ✅
-      setDate(new Date(transaction.transaction_date)); // ✅
+      setDate(parseDate(transaction.transaction_date)); // ✅
     }
   }, [transaction]);
 
@@ -238,7 +237,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
             </div>
           </div>
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label>Fecha</Label>
             <Popover>
               <PopoverTrigger asChild>
@@ -266,8 +265,13 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
                 />
               </PopoverContent>
             </Popover>
-          </div>
+          </div> */}
 
+          {/* -------- */}
+          <div className="space-y-2">
+            <Label>Fecha</Label>
+            <DatePicker date={date} onDateChange={setDate} />
+          </div>
           <DialogFooter className="flex gap-2 sm:gap-0 mt-4">
             <AlertDialog>
               <AlertDialogTrigger asChild>

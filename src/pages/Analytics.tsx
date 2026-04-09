@@ -171,7 +171,7 @@ export default function Analytics() {
       console.log("❌ No user id yet");
       return;
     }
-    console.log("✅ Loading budgets for user:", user.id);
+    // console.log("✅ Loading budgets for user:", user.id);
     supabase
       .from("profiles")
       .select("category_budgets")

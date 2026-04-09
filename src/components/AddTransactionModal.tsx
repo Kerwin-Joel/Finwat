@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -14,8 +12,7 @@ import {
 } from "./ui/select";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Calendar } from "./ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { DatePicker } from "./ui/calendar";
 import { useToast } from "../hooks/use-toast";
 import useTransactionStore from "../stores/transactionStore";
 import useAccountStore from "../stores/accountStore";
@@ -203,7 +200,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             </div>
           </div>
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label>Fecha</Label>
             <Popover>
               <PopoverTrigger asChild>
@@ -231,8 +228,12 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 />
               </PopoverContent>
             </Popover>
+          </div> */}
+          {/* -------- */}
+          <div className="space-y-2">
+            <Label>Fecha</Label>
+            <DatePicker date={date} onDateChange={setDate} />
           </div>
-
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Guardando..." : "Guardar y Confirmar"}
           </Button>
