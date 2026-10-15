@@ -15,27 +15,57 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import FinwatLogo from "@/assets/FinwatLogo";
+import { useToast } from "../hooks/use-toast";
+import { getAuthErrorMessage, isEmailNotConfirmed } from "@/lib/authErrors";
+import { resendConfirmation } from "@/api/authService";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const { login, isLoading } = useAuthStore();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
     setLoginError("");
+    setNeedsConfirmation(false);
+    if (!email.trim() || !password) {
+      setLoginError("Ingresa tu correo y contraseña.");
+      return;
+    }
 
     try {
-      await login({ email, password });
+      await login({ email: email.trim(), password });
       navigate("/splash");
-    } catch {
-      setLoginError("Correo o contraseña incorrectos. Intenta de nuevo.");
+    } catch (error) {
+      setNeedsConfirmation(isEmailNotConfirmed(error));
+      setLoginError(getAuthErrorMessage(error, "No se pudo iniciar sesión."));
     }
-  };;
+  };
+
+  const handleResend = async () => {
+    setIsResending(true);
+    try {
+      await resendConfirmation(email.trim());
+      toast({
+        title: "Correo reenviado",
+        description: `Revisa la bandeja de ${email.trim()}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "No se pudo reenviar",
+        description: getAuthErrorMessage(error, "Intenta de nuevo más tarde."),
+        variant: "destructive",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -62,7 +92,7 @@ const Login = () => {
               Ingresa tus credenciales para continuar
             </CardDescription>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Correo electrónico</Label>
@@ -76,7 +106,15 @@ const Login = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Contraseña</Label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs font-medium text-primary hover:underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
                 <div className="relative">
                   <Input
                     id="password"
@@ -104,6 +142,16 @@ const Login = () => {
                     <span>{loginError}</span>
                   </motion.div>
                 )}
+                {needsConfirmation && (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={isResending}
+                    className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
+                  >
+                    {isResending ? "Reenviando…" : "Reenviar correo de confirmación"}
+                  </button>
+                )}
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
@@ -123,12 +171,6 @@ const Login = () => {
                   Regístrate
                 </Link>
               </div>
-              <Link
-                to="/forgot-password"
-                className="text-xs text-muted-foreground hover:text-primary transition-colors w-full text-center"
-              >
-                ¿Olvidaste tu contraseña?
-              </Link>
             </CardFooter>
           </form>
         </Card>

@@ -1,8 +1,17 @@
 import { create } from "zustand";
 import type { User } from "../types/auth";
-import { login, register, logout, updateProfile } from "../api/authService";
+import {
+  login,
+  register,
+  logout,
+  updateProfile,
+  changePassword,
+} from "../api/authService";
 import type { LoginRequest, RegisterRequest } from "../types/auth";
 import { supabase } from "@/lib/supabase";
+import { getAuthErrorMessage } from "@/lib/authErrors";
+
+let authListenerStarted = false;
 
 interface AuthState {
   user: User | null;
@@ -11,7 +20,8 @@ interface AuthState {
   error: string | null;
   isAuthenticated: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
-  register: (data: RegisterRequest) => Promise<void>;
+  /** Devuelve true si la cuenta necesita confirmar el correo antes de entrar */
+  register: (data: RegisterRequest) => Promise<{ needsConfirmation: boolean }>;
   logout: () => Promise<void>;
   updateUserProfile: (data: Partial<User>) => Promise<void>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
@@ -45,24 +55,21 @@ const useAuthStore = create<AuthState>((set) => ({
 
   //   ok
   initAuth: () => {
+    if (authListenerStarted) return;
+    authListenerStarted = true;
+
     set({ isInitializing: true });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      set({
-        user: mapUser(session?.user ?? null),
-        token: session?.access_token ?? null,
-        isAuthenticated: !!session,
-        isLoading: false,
-        isInitializing: false, // ✅
-      });
-    });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      set({
-        user: mapUser(session?.user ?? null),
-        token: session?.access_token ?? null,
-        isAuthenticated: !!session,
-        isLoading: false,
-      });
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        set({
+          user: mapUser(session?.user ?? null),
+          token: session?.access_token ?? null,
+          isAuthenticated: !!session,
+        });
+      })
+      .catch(() => set({ user: null, token: null, isAuthenticated: false }))
+      .finally(() => set({ isLoading: false, isInitializing: false }));
 
     supabase.auth.onAuthStateChange((_event, session) => {
       set({
@@ -85,7 +92,7 @@ const useAuthStore = create<AuthState>((set) => ({
       });
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : "Error al iniciar sesión",
+        error: getAuthErrorMessage(err, "Error al iniciar sesión"),
         isLoading: false,
         isAuthenticated: false, // ✅ asegura que no se autentique
         user: null,
@@ -104,11 +111,13 @@ const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: !!data.session,
         isLoading: false,
       });
+      return { needsConfirmation: !data.session };
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : "Error al registrarse",
+        error: getAuthErrorMessage(err, "Error al registrarse"),
         isLoading: false,
       });
+      throw err;
     }
   },
   //   ok
@@ -139,21 +148,23 @@ const useAuthStore = create<AuthState>((set) => ({
   changePassword: async (oldPassword, newPassword) => {
     set({ isLoading: true, error: null });
     try {
-      // MOCK - simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Verifying old password:", oldPassword); // Simulate verification
-      // In real app, verify oldPassword and update
+      const email = useAuthStore.getState().user?.email;
+      if (!email) throw new Error("No hay una sesión activa");
       if (newPassword.length < 8) {
         throw new Error("La contraseña debe tener al menos 8 caracteres");
       }
+      await changePassword(email, oldPassword, newPassword);
       set({ isLoading: false });
     } catch (err) {
+      const message = getAuthErrorMessage(err, "Error al cambiar contraseña");
       set({
         error:
-          err instanceof Error ? err.message : "Error al cambiar contraseña",
+          (err as { code?: string })?.code === "invalid_credentials"
+            ? "La contraseña actual es incorrecta."
+            : message,
         isLoading: false,
       });
-      throw err;
+      throw new Error(useAuthStore.getState().error ?? message);
     }
   },
 

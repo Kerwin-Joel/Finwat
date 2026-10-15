@@ -16,6 +16,7 @@ import {
 import { useToast } from "../hooks/use-toast";
 import { supabase } from "../lib/supabase";
 import FinwatLogo from "../assets/FinwatLogo";
+import { getAuthErrorMessage } from "../lib/authErrors";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -25,16 +26,47 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
+  const [linkError, setLinkError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Supabase inyecta la sesión automáticamente desde el link del correo
-    supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
+    // Enlace inválido o expirado: Supabase lo indica en el hash o la query
+    const params = new URLSearchParams(
+      window.location.hash.slice(1) || window.location.search,
+    );
+    const errorCode = params.get("error_code");
+    if (errorCode || params.get("error")) {
+      setLinkError(
+        getAuthErrorMessage(
+          { code: errorCode ?? undefined, message: params.get("error_description") ?? undefined },
+          "El enlace no es válido.",
+        ),
+      );
+      return;
+    }
+
+    // Supabase procesa el enlace del correo al iniciar la app, a veces antes de
+    // que esta página escuche el evento PASSWORD_RECOVERY: revisamos también la sesión.
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
         setIsValidSession(true);
       }
     });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setIsValidSession(true);
+    });
+
+    const timeout = setTimeout(() => {
+      setLinkError((current) =>
+        current || "No encontramos una sesión de recuperación. El enlace pudo expirar.",
+      );
+    }, 8000);
+
+    return () => {
+      listener.subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,15 +92,14 @@ const ResetPassword = () => {
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
+      // Cierra la sesión de recuperación para que inicie sesión con la nueva clave
+      await supabase.auth.signOut();
       setDone(true);
       setTimeout(() => navigate("/login"), 3000);
     } catch (error) {
       toast({
         title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "No se pudo actualizar la contraseña",
+        description: getAuthErrorMessage(error, "No se pudo actualizar la contraseña"),
         variant: "destructive",
       });
     } finally {
@@ -116,9 +147,14 @@ const ResetPassword = () => {
             </CardContent>
           ) : !isValidSession ? (
             <CardContent className="text-center py-8">
-              <p className="text-sm text-muted-foreground">
-                Esperando sesión de recuperación...
-              </p>
+              {linkError ? (
+                <p className="text-sm text-red-400">{linkError}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Verificando enlace de recuperación...
+                </p>
+              )}
               <p className="text-xs text-muted-foreground mt-2">
                 Si llegaste aquí por error,{" "}
                 <span

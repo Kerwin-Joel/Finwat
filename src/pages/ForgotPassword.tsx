@@ -14,8 +14,9 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { useToast } from "../hooks/use-toast";
-import { supabase } from "../lib/supabase";
 import FinwatLogo from "../assets/FinwatLogo";
+import { sendPasswordReset } from "../api/authService";
+import { getAuthErrorMessage } from "../lib/authErrors";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -25,21 +26,15 @@ const ForgotPassword = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!email.trim()) return;
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (error) throw error;
+      await sendPasswordReset(email.trim());
       setSent(true);
     } catch (error) {
       toast({
         title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "No se pudo enviar el correo",
+        description: getAuthErrorMessage(error, "No se pudo enviar el correo"),
         variant: "destructive",
       });
     } finally {
@@ -85,8 +80,16 @@ const ForgotPassword = () => {
               <p className="text-sm text-muted-foreground">
                 Enviamos un correo a{" "}
                 <span className="font-medium text-foreground">{email}</span>.
-                Revisa tu bandeja de entrada y sigue las instrucciones.
+                Revisa tu bandeja de entrada (y la carpeta de spam) y sigue las
+                instrucciones.
               </p>
+              <button
+                type="button"
+                onClick={() => setSent(false)}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                ¿No te llegó? Enviar de nuevo
+              </button>
             </CardContent>
           ) : (
             <form onSubmit={handleSubmit}>

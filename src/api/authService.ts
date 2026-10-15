@@ -27,8 +27,6 @@ export const login = async (credentials: LoginRequest) => {
     password: credentials.password,
   });
   if (error) throw error;
-  console.log("DATA:", data);
-  console.log("ERROR:", error);
   return data;
 };
 
@@ -45,16 +43,54 @@ export const register = async (userData: RegisterRequest) => {
     email: userData.email,
     password: userData.password,
     options: {
+      emailRedirectTo: window.location.origin,
       data: {
         name: userData.name,
         phone: userData.phone,
       },
     },
   });
-  console.log("DATA:", data);
-  console.log("ERROR:", error);
   if (error) throw error;
+  // Con confirmación de correo activa, Supabase no devuelve error para correos
+  // ya registrados: devuelve un usuario sin identidades.
+  if (data.user && data.user.identities?.length === 0) {
+    throw Object.assign(new Error("User already registered"), {
+      code: "user_already_exists",
+    });
+  }
   return data;
+};
+
+export const sendPasswordReset = async (email: string) => {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  });
+  if (error) throw error;
+};
+
+export const resendConfirmation = async (email: string) => {
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: { emailRedirectTo: window.location.origin },
+  });
+  if (error) throw error;
+};
+
+export const changePassword = async (
+  email: string,
+  currentPassword: string,
+  newPassword: string,
+) => {
+  // Verifica la contraseña actual antes de cambiarla
+  const { error: verifyError } = await supabase.auth.signInWithPassword({
+    email,
+    password: currentPassword,
+  });
+  if (verifyError) throw verifyError;
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw error;
 };
 
 export const logout = async (): Promise<void> => {
