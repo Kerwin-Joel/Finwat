@@ -15,6 +15,7 @@ import PublicRoute from "./components/layout/PublicRoute";
 import ForgotPassword from "./pages/ForgotPassword";
 import SplashScreen from "./components/SplashScreen";
 import ResetPassword from "./pages/ResetPassword";
+import AuthConfirmed from "./pages/AuthConfirmed";
 import Analytics from "./pages/Analytics";
 import Reminders from "./pages/Reminders";
 import Loans from "./pages/Loans";
@@ -84,6 +85,8 @@ function App() {
           }
         />
         <Route path="/reset-password" element={<ResetPassword />} />
+        {/* Sin PublicRoute: tras confirmar el usuario ya tiene sesión y debe ver la confirmación */}
+        <Route path="/auth/confirmed" element={<AuthConfirmed />} />
         {/* <Route path="/login" element={<TestAuth />} /> */}
         <Route
           path="/register"

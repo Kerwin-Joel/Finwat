@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light only" />
+  <title>Tu enlace para entrar a Finwat</title>
+</head>
+<body style="margin:0;padding:0;background-color:#eef2f8;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+  <!-- Texto de vista previa en la bandeja de entrada -->
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
+    Usa este enlace para iniciar sesión en Finwat.
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#eef2f8;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+
+          <!-- Encabezado con marca -->
+          <tr>
+            <td align="center" style="background-color:#000000;border-radius:16px 16px 0 0;padding:32px 24px 28px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td valign="middle" style="padding-right:12px;">
+                    <img src="https://www.finwat.com/apple-touch-icon.png" width="44" height="43" alt="Finwat" style="display:block;border:0;" />
+                  </td>
+                  <td valign="middle" style="font-size:30px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">
+                    Finwat
+                  </td>
+                </tr>
+              </table>
+              <div style="width:56px;height:3px;background-color:#0066ff;background-image:linear-gradient(90deg,#00aaff,#0066ff,#003899);border-radius:2px;margin:18px auto 14px;line-height:3px;font-size:0;">&nbsp;</div>
+              <div style="font-size:14px;color:#4fb8ff;">Descubre a dónde se va tu dinero.</div>
+            </td>
+          </tr>
+
+          <!-- Contenido -->
+          <tr>
+            <td style="background-color:#ffffff;padding:40px 40px 32px;">
+              <h1 style="margin:0 0 16px;font-size:24px;line-height:32px;color:#0b1220;font-weight:700;">
+                {{ if .Data.name }}Hola, {{ .Data.name }}{{ else }}Hola{{ end }} 👋
+              </h1>
+              <p style="margin:0 0 16px;font-size:16px;line-height:26px;color:#3b4456;">
+                Usa este botón para entrar a tu cuenta Finwat
+                <strong style="color:#0b1220;">{{ .Email }}</strong> sin escribir tu contraseña.
+              </p>
+
+              <!-- Botón -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0;">
+                <tr>
+                  <td align="center" style="border-radius:12px;background-color:#0066ff;background-image:linear-gradient(135deg,#00aaff 0%,#0066ff 55%,#003899 100%);">
+                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block;padding:16px 36px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px;">
+                      Entrar a Finwat
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:28px 0 8px;font-size:13px;line-height:20px;color:#6b7385;">
+                ¿El botón no funciona? Copia y pega este enlace en tu navegador:
+              </p>
+              <p style="margin:0;font-size:12px;line-height:18px;word-break:break-all;">
+                <a href="{{ .ConfirmationURL }}" target="_blank" style="color:#0066ff;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Seguridad -->
+          <tr>
+            <td style="background-color:#ffffff;border-top:1px solid #e6eaf2;padding:20px 40px 28px;border-radius:0 0 16px 16px;">
+              <p style="margin:0;font-size:13px;line-height:20px;color:#6b7385;">
+                🔒 Este enlace vence pronto y solo se puede usar una vez. Si no intentaste iniciar sesión,
+                ignora este correo: nadie puede entrar a tu cuenta sin él.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Pie -->
+          <tr>
+            <td align="center" style="padding:24px 16px 8px;">
+              <p style="margin:0 0 6px;font-size:12px;line-height:18px;color:#8a93a6;">
+                Finwat · Finanzas personales simples e inteligentes
+              </p>
+              <p style="margin:0;font-size:12px;line-height:18px;">
+                <a href="https://www.finwat.com" target="_blank" style="color:#0066ff;text-decoration:none;">finwat.com</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
