@@ -30,6 +30,11 @@ export const login = async (credentials: LoginRequest) => {
   return data;
 };
 
+// Página a la que vuelve el usuario tras confirmar su correo.
+// Debe estar en Supabase → Authentication → URL Configuration → Redirect URLs,
+// si no Supabase ignora este valor y usa el "Site URL".
+const CONFIRM_EMAIL_REDIRECT = `${window.location.origin}/auth/confirmed`;
+
 export const register = async (userData: RegisterRequest) => {
   // MOCK - reemplazar con: const { response } = await axiosInstance.post('/auth/register', data); return response;
   // await new Promise(resolve => setTimeout(resolve, 1000));
@@ -43,7 +48,7 @@ export const register = async (userData: RegisterRequest) => {
     email: userData.email,
     password: userData.password,
     options: {
-      emailRedirectTo: window.location.origin,
+      emailRedirectTo: CONFIRM_EMAIL_REDIRECT,
       data: {
         name: userData.name,
         phone: userData.phone,
@@ -72,7 +77,7 @@ export const resendConfirmation = async (email: string) => {
   const { error } = await supabase.auth.resend({
     type: "signup",
     email,
-    options: { emailRedirectTo: window.location.origin },
+    options: { emailRedirectTo: CONFIRM_EMAIL_REDIRECT },
   });
   if (error) throw error;
 };
