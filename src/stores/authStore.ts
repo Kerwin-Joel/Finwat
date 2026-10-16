@@ -6,6 +6,7 @@ import {
   logout,
   updateProfile,
   changePassword,
+  ensureProfile,
 } from "../api/authService";
 import type { LoginRequest, RegisterRequest } from "../types/auth";
 import { supabase } from "@/lib/supabase";
@@ -71,7 +72,12 @@ const useAuthStore = create<AuthState>((set) => ({
       .catch(() => set({ user: null, token: null, isAuthenticated: false }))
       .finally(() => set({ isLoading: false, isInitializing: false }));
 
-    supabase.auth.onAuthStateChange((_event, session) => {
+    supabase.auth.onAuthStateChange((event, session) => {
+      // Cubre login, sesión restaurada y confirmación de correo
+      if (session?.user && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
+        // setTimeout: no llamar a Supabase dentro del callback (puede bloquear el cliente de auth)
+        setTimeout(() => ensureProfile(session.user), 0);
+      }
       set({
         user: mapUser(session?.user ?? null),
         token: session?.access_token ?? null,

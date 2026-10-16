@@ -102,14 +102,75 @@ export const logout = async (): Promise<void> => {
   if (error) throw error;
 };
 
+// El bot de WhatsApp busca el teléfono en profiles.phone con formato 51XXXXXXXXX (solo dígitos)
+const normalizePhone = (phone?: string) => phone?.replace(/\D/g, "") || undefined;
+
+const PHONE_TAKEN_MESSAGE =
+  "Ese número de teléfono ya está registrado en otra cuenta Finwat.";
+
+const isUniqueViolation = (error: { code?: string } | null) =>
+  error?.code === "23505";
+
 export const updateProfile = async (data: Partial<User>) => {
+  const phone = normalizePhone(data.phone);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("No autenticado");
+
+  // profiles es lo que usan el bot y el resto de la app; user_metadata solo es una copia
+  const profileUpdates: Record<string, string> = {};
+  if (data.name) profileUpdates.full_name = data.name;
+  if (phone) profileUpdates.phone = phone;
+
+  if (Object.keys(profileUpdates).length > 0) {
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update(profileUpdates)
+      .eq("id", user.id);
+    if (isUniqueViolation(profileError)) throw new Error(PHONE_TAKEN_MESSAGE);
+    if (profileError) throw profileError;
+  }
+
   const { error } = await supabase.auth.updateUser({
     data: {
       name: data.name,
-      phone: data.phone,
+      phone,
       dateOfBirth: data.dateOfBirth,
       photoUrl: data.photoUrl,
     },
   });
   if (error) throw error;
+};
+
+// Crea la fila de profiles si el registro no la creó (sin perfil la app da 406 y el bot no reconoce al usuario)
+export const ensureProfile = async (user: {
+  id: string;
+  user_metadata?: { name?: string; phone?: string };
+}) => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error verificando perfil:", error);
+    return;
+  }
+  if (data) return;
+
+  const { error: insertError } = await supabase.from("profiles").insert({
+    id: user.id,
+    full_name: user.user_metadata?.name ?? "",
+    phone: normalizePhone(user.user_metadata?.phone) ?? null,
+    is_active: true,
+  });
+
+  if (isUniqueViolation(insertError)) {
+    console.error(PHONE_TAKEN_MESSAGE, insertError);
+    return;
+  }
+  if (insertError) console.error("Error creando perfil:", insertError);
 };
