@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Home, Receipt, Zap, Wallet, User } from 'lucide-react';
+import { Home, Receipt, Zap, Wallet, User, TrendingUp } from 'lucide-react';
 import { ROUTES } from '../../constants/routes';
 
 const BottomNav = () => {
@@ -11,6 +11,7 @@ const BottomNav = () => {
         { icon: Home, label: 'Home', path: ROUTES.HOME },
         { icon: Receipt, label: 'Movimientos', path: ROUTES.TRANSACTIONS },
         { icon: Zap, label: 'Servicios', path: ROUTES.SERVICES },
+        { icon: TrendingUp, label: 'Inversiones', path: ROUTES.INVESTMENTS },
         { icon: Wallet, label: 'Analisis', path: ROUTES.ACCOUNTS },
         { icon: User, label: 'Perfil', path: ROUTES.PROFILE },
     ];
@@ -19,7 +20,10 @@ const BottomNav = () => {
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-t border-border pb-safe">
             <div className="flex justify-around items-center h-16 max-w-md mx-auto px-2">
                 {navItems.map((item) => {
-                    const isActive = location.pathname === item.path;
+                    const isActive =
+                        item.path === ROUTES.HOME
+                            ? location.pathname === item.path
+                            : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
                     return (
                         <button
                             key={item.path}

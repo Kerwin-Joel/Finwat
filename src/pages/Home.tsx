@@ -26,7 +26,7 @@ import type {
 } from "../types/transaction";
 import OnboardingModal from "@/components/OnboardingModal";
 import EditTransactionModal from "@/components/EditTransactionModal";
-import { Bell, DollarSign, FileText, Users, Target } from "lucide-react";
+import { Bell, DollarSign, FileText, Users, Target, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Home = () => {
@@ -195,6 +195,15 @@ const Home = () => {
                 >
                   <DollarSign className="h-4 w-4 text-green-400" />
                   Préstamos
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-3"
+                  onClick={() => navigate("investments")}
+                >
+                  <TrendingUp className="h-4 w-4 text-sky-400" />
+                  Inversiones con gestores
                 </Button>
 
                 <Button

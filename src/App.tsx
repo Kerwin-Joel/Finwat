@@ -19,6 +19,8 @@ import AuthConfirmed from "./pages/AuthConfirmed";
 import Analytics from "./pages/Analytics";
 import Reminders from "./pages/Reminders";
 import Loans from "./pages/Loans";
+import Investments from "./pages/Investments";
+import InvestmentLineDetail from "./pages/InvestmentLineDetail";
 
 function App() {
   const initAuth = useAuthStore((state) => state.initAuth);
@@ -112,6 +114,8 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="reminders" element={<Reminders />} />
           <Route path="loans" element={<Loans />} />
+          <Route path="investments" element={<Investments />} />
+          <Route path="investments/:lineId" element={<InvestmentLineDetail />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
