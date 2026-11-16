@@ -55,14 +55,21 @@ const CardCarousel = ({
 
   return (
     <div role="region" aria-roledescription="carrusel" aria-label="Tus cuentas y tarjetas">
-      {/* Pista: padding vertical para que la sombra de la tarjeta no se corte */}
+      {/* Una sola cuenta: sin contenedor de scroll (nada recorta la sombra).
+          Varias: la pista tiene más margen interno que el alcance de la sombra (~40 px),
+          compensado con márgenes negativos, para que ningún borde la corte. */}
+      {!multiple && accounts[0] ? (
+        <AccountCard
+          account={accounts[0]}
+          totalIncome={stats.get(accounts[0].id)?.income ?? 0}
+          totalExpenses={stats.get(accounts[0].id)?.expense ?? 0}
+          totalBalance={(stats.get(accounts[0].id)?.income ?? 0) - (stats.get(accounts[0].id)?.expense ?? 0)}
+        />
+      ) : (
       <div
         ref={trackRef}
         onScroll={onScroll}
-        className={cn(
-          "-mx-4 -my-6 flex snap-x snap-mandatory overflow-x-auto scroll-smooth scroll-px-4 px-4 py-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-          "md:-mx-3 md:scroll-px-3 md:px-3",
-        )}
+        className="pointer-events-none -mx-10 -mb-12 -mt-6 flex snap-x snap-mandatory overflow-x-auto scroll-smooth scroll-px-10 px-10 pb-12 pt-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*]:pointer-events-auto"
         style={{ gap: GAP }}
       >
         {accounts.map((a, i) => {
@@ -83,6 +90,7 @@ const CardCarousel = ({
           );
         })}
       </div>
+      )}
 
       {/* Controles */}
       <div className="mt-3 flex items-center justify-between gap-3">
