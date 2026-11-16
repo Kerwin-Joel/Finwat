@@ -12,6 +12,7 @@ import Services from "./pages/Services";
 import Profile from "./pages/Profile";
 import { Toaster } from "./components/ui/toaster";
 import PublicRoute from "./components/layout/PublicRoute";
+import ThemeColorSync from "./components/layout/ThemeColorSync";
 import ForgotPassword from "./pages/ForgotPassword";
 import SplashScreen from "./components/SplashScreen";
 import ResetPassword from "./pages/ResetPassword";
@@ -71,6 +72,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <ThemeColorSync />
       {/* 
         Note: AnimatePresence mode="wait" works best with unique keys on Routes. 
         However, React Router v6 Routes don't accept keys easily for transitions 
