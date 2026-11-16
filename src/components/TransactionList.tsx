@@ -60,9 +60,9 @@ const TransactionList: React.FC<TransactionListProps> = ({
   return (
     <div className="space-y-4">
       <div
-        className={`flex items-center justify-between sticky top-0 bg-background z-10 py-2 transition-all duration-300`}
+        className={`flex items-center justify-between sticky top-0 bg-background/90 backdrop-blur-md z-10 py-2 transition-all duration-300`}
       >
-        <h3 className="text-lg font-semibold tracking-tight px-1">
+        <h3 className="text-[17px] font-semibold tracking-[-0.02em] px-1">
           Movimientos
         </h3>
         <div className="flex space-x-2">
@@ -342,7 +342,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
         />
       </div>
 
-      <div className="space-y-1">
+      <div className="surface divide-y divide-border/60 overflow-hidden px-1.5">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <SkeletonTransactionItem key={i} />
@@ -357,8 +357,8 @@ const TransactionList: React.FC<TransactionListProps> = ({
             />
           ))
         ) : (
-          <div className="text-center py-8 text-muted-foreground text-sm">
-            No hay movimientos registrados.
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            Aún no hay movimientos. Regístralos aquí o por WhatsApp.
           </div>
         )}
       </div>

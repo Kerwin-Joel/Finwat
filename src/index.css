@@ -1,55 +1,72 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400..600&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* =====================================================================================
+   Finwat — sistema de diseño
+   Tipografía Geist · neutros gris-azulados · marino como color de acción · azul eléctrico
+   como acento · héroe "aurora" (marino → azul → celeste) con grano sutil.
+   ===================================================================================== */
+
 @layer base {
   :root {
-    --font-sans: "Inter", system-ui, sans-serif;
+    --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --background: 222 33% 97%;
+    --foreground: 228 48% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 228 48% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
-    --radius: 0.5rem;
+    --popover-foreground: 228 48% 10%;
+    --primary: 229 62% 13%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 30% 94%;
+    --secondary-foreground: 228 48% 10%;
+    --muted: 222 30% 94%;
+    --muted-foreground: 224 12% 45%;
+    --accent: 222 32% 95%;
+    --accent-foreground: 228 48% 10%;
+    --destructive: 2 74% 52%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 223 24% 90%;
+    --input: 223 22% 88%;
+    --ring: 222 100% 56%;
+    --radius: 1rem;
+
+    --brand: 222 100% 56%;
+    --brand-soft: 216 100% 94%;
+    --positive: 152 62% 36%;
+    --shadow-color: 228 60% 18%;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --background: 230 45% 5%;
+    --foreground: 222 33% 96%;
+    --card: 229 40% 9%;
+    --card-foreground: 222 33% 96%;
+    --popover: 229 40% 10%;
+    --popover-foreground: 222 33% 96%;
+    --primary: 222 33% 97%;
+    --primary-foreground: 229 62% 11%;
+    --secondary: 228 30% 14%;
+    --secondary-foreground: 222 33% 96%;
+    --muted: 228 30% 13%;
+    --muted-foreground: 223 16% 63%;
+    --accent: 228 30% 15%;
+    --accent-foreground: 222 33% 96%;
+    --destructive: 2 70% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 228 28% 16%;
+    --input: 228 28% 18%;
+    --ring: 220 100% 64%;
+
+    --brand: 220 100% 64%;
+    --brand-soft: 224 60% 18%;
+    --positive: 152 55% 52%;
+    --shadow-color: 230 60% 2%;
   }
 
   .custom {
@@ -60,7 +77,6 @@
     --popover: 0 0% 100%;
     --popover-foreground: 260 25% 10%;
     --primary: 262 83% 58%;
-    /* Purple */
     --primary-foreground: 210 40% 98%;
     --secondary: 260 20% 96%;
     --secondary-foreground: 262 83% 58%;
@@ -71,11 +87,13 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 262 83% 58%;
-    /* More visible border */
     --input: 262 20% 90%;
     --ring: 262 83% 58%;
     --radius: 1rem;
-    /* Rounded corners for custom look */
+    --brand: 262 83% 58%;
+    --brand-soft: 262 80% 95%;
+    --positive: 152 62% 36%;
+    --shadow-color: 262 40% 20%;
   }
 }
 
@@ -84,13 +102,115 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.025em;
+  }
+
+  ::selection {
+    background: hsl(var(--brand) / 0.25);
   }
 }
+
+@layer components {
+  /* Héroe "aurora": marino profundo arriba, azul eléctrico, celeste lavado abajo */
+  .hero-aurora {
+    position: relative;
+    isolation: isolate;
+    color: #fff;
+    background:
+      radial-gradient(120% 70% at 100% 0%, rgba(84, 132, 255, 0.55) 0%, transparent 60%),
+      radial-gradient(90% 60% at 0% 100%, rgba(170, 205, 255, 0.55) 0%, transparent 65%),
+      linear-gradient(168deg, #050a1c 0%, #0a1748 34%, #1a44c4 70%, #8fb3ff 100%);
+  }
+
+  /* Grano fino encima del gradiente (look esmerilado de la referencia) */
+  .hero-aurora::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.18;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  /* Superficie blanca con sombra difusa en capas */
+  .surface {
+    @apply rounded-2xl border border-border/70 bg-card text-card-foreground;
+    box-shadow:
+      0 1px 2px hsl(var(--shadow-color) / 0.04),
+      0 8px 24px -12px hsl(var(--shadow-color) / 0.12);
+  }
+
+  /* Vidrio sobre el héroe */
+  .glass-on-hero {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  /* Etiqueta pequeña en mayúsculas espaciadas (ADD / SEND / CONVERT) */
+  .eyebrow {
+    @apply text-[10px] font-semibold uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum", "ss01";
+    letter-spacing: -0.02em;
+  }
+
+  /* Skeleton con brillo que recorre (en vez de parpadeo) */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+    background: hsl(var(--muted));
+  }
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, hsl(var(--card) / 0.65), transparent);
+    animation: shimmer 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer::after {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}
+
 .PhoneInputCountrySelect {
-  @apply bg-background text-foreground border border-input rounded-md px-2 h-10 cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring;
+  @apply bg-card text-foreground border border-input rounded-xl px-2 h-11 cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring;
 }
 
 .PhoneInputCountrySelectArrow {

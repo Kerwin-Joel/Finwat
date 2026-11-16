@@ -44,12 +44,12 @@ export const SummaryTab = ({ detail }: { detail: LineDetail }) => {
   return (
     <motion.div className="space-y-4" initial="hidden" animate="show" variants={stagger}>
       <motion.div variants={item} className="grid grid-cols-2 gap-3">
-        <Stat label="Según mis registros · por cobrar">
+        <Stat label="Mis registros">
           <CountUp cents={s.pending_total_cents} currency={cur} />
         </Stat>
         <Stat label="Conciliado" tone="muted">
-          <span className="text-sm font-medium">
-            {s.manager_linked ? "Pendiente" : "Cuando el gestor se una"}
+          <span className="text-[13px] font-medium">
+            {s.manager_linked ? "Pendiente" : "Al unirse el gestor"}
           </span>
         </Stat>
         <Stat label="Vencido" tone={s.overdue_cents > 0 ? "warn" : "default"}>
@@ -61,7 +61,7 @@ export const SummaryTab = ({ detail }: { detail: LineDetail }) => {
       </motion.div>
 
       {s.next_due && (
-        <motion.div variants={item} className="rounded-xl border border-border/60 bg-card/60 p-4">
+        <motion.div variants={item} className="surface p-4">
           <p className="text-xs text-muted-foreground">Próximo vencimiento</p>
           <div className="mt-1 flex items-baseline justify-between">
             <p className="text-lg font-bold tabular-nums">{formatCents(s.next_due.amount_cents, cur)}</p>
@@ -72,7 +72,7 @@ export const SummaryTab = ({ detail }: { detail: LineDetail }) => {
         </motion.div>
       )}
 
-      <motion.div variants={item} className="flex items-center gap-4 rounded-xl border border-border/60 bg-card/60 p-4">
+      <motion.div variants={item} className="flex items-center gap-4 surface p-4">
         <ProgressRing
           size={72}
           stroke={7}
@@ -96,7 +96,7 @@ export const SummaryTab = ({ detail }: { detail: LineDetail }) => {
         </div>
       </motion.div>
 
-      <motion.div variants={item} className="rounded-xl border border-border/60 bg-card/60 p-4">
+      <motion.div variants={item} className="surface p-4">
         <div className="mb-2 flex items-baseline justify-between">
           <p className="text-sm font-medium">Cobrado vs esperado</p>
           <p className="text-xs text-muted-foreground">
@@ -118,7 +118,7 @@ export const SummaryTab = ({ detail }: { detail: LineDetail }) => {
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Bar dataKey="esperado" name="Esperado" fill="#64748b" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="cobrado" name="Cobrado" fill="#0066ff" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="cobrado" name="Cobrado" fill="hsl(var(--brand))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -173,11 +173,11 @@ export const ContributionsTab = ({
             <span
               className={cn(
                 "absolute -left-[21px] top-4 h-2.5 w-2.5 rounded-full",
-                anulado ? "bg-muted" : c.status === "liquidado" ? "bg-emerald-500" : "bg-[#0066ff]",
+                anulado ? "bg-muted" : c.status === "liquidado" ? "bg-emerald-500" : "bg-brand",
               )}
               aria-hidden="true"
             />
-            <div className={cn("rounded-xl border border-border/60 bg-card/60", anulado && "opacity-60")}>
+            <div className={cn("surface", anulado && "opacity-60")}>
               <button
                 type="button"
                 className="flex min-h-11 w-full items-center justify-between gap-3 p-4 text-left"
@@ -330,8 +330,8 @@ export const CalendarTab = ({ detail }: { detail: LineDetail }) => {
               onClick={() => setSelected(d)}
               className={cn(
                 "flex h-11 flex-col items-center justify-center rounded-lg text-xs tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                isSel ? "bg-[#0066ff]/20 font-semibold" : "hover:bg-muted",
-                isToday && "ring-1 ring-[#00aaff]",
+                isSel ? "bg-brand/15 font-semibold" : "hover:bg-muted",
+                isToday && "ring-1 ring-brand",
               )}
             >
               {Number(d.slice(8))}
@@ -358,7 +358,7 @@ export const CalendarTab = ({ detail }: { detail: LineDetail }) => {
         ))}
       </div>
       {selected && (
-        <div className="rounded-xl border border-border/60 bg-card/60 p-4">
+        <div className="surface p-4">
           <p className="mb-2 text-xs text-muted-foreground">{formatDay(selected, "EEEE d 'de' MMMM")}</p>
           {dayItems.length === 0 ? (
             <p className="text-xs text-muted-foreground">Sin vencimientos este día</p>
@@ -442,7 +442,7 @@ export const PaymentsTab = ({
         {payments.map((p) => {
           const anulado = p.status === "anulado";
           return (
-            <motion.li key={p.id} variants={item} className={cn("rounded-xl border border-border/60 bg-card/60 p-4", anulado && "opacity-60")}>
+            <motion.li key={p.id} variants={item} className={cn("surface p-4", anulado && "opacity-60")}>
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className={cn("text-sm font-semibold tabular-nums", anulado && "line-through")}>

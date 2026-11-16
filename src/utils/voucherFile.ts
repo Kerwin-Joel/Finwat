@@ -7,14 +7,29 @@ export interface PreparedVoucher {
   blob: Blob;
   extension: "webp" | "jpg" | "png" | "pdf";
   contentType: string;
-  hash: string; // SHA-256 hex del archivo original (para detectar duplicados)
+  hash: string | null; // SHA-256 hex del archivo original (para detectar duplicados)
 }
 
-const sha256Hex = async (data: ArrayBuffer): Promise<string> => {
+// crypto.subtle solo existe en contextos seguros (HTTPS o localhost). Probando desde el
+// celular por IP local (http://192.168…) no está: el voucher se sube igual, sin hash.
+const sha256Hex = async (data: ArrayBuffer): Promise<string | null> => {
+  if (!globalThis.crypto?.subtle) return null;
   const digest = await crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+};
+
+/** UUID v4; crypto.randomUUID tampoco existe fuera de HTTPS */
+export const newId = (): string => {
+  if (typeof globalThis.crypto?.randomUUID === "function") return crypto.randomUUID();
+  const b = new Uint8Array(16);
+  if (typeof globalThis.crypto?.getRandomValues === "function") crypto.getRandomValues(b);
+  else for (let i = 0; i < 16; i++) b[i] = Math.floor(Math.random() * 256);
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 };
 
 const loadImage = (file: File): Promise<HTMLImageElement> =>

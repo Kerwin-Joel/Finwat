@@ -99,7 +99,7 @@ export function Chips<T extends string>({
             className={cn(
               "min-h-11 rounded-full border px-4 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               active
-                ? "border-[#0066ff] bg-[#0066ff]/15 font-medium text-foreground"
+                ? "border-primary bg-primary font-medium text-primary-foreground"
                 : "border-border text-muted-foreground hover:bg-muted",
             )}
           >
@@ -245,7 +245,7 @@ export const AllocationBars = ({
               <motion.div
                 className={cn(
                   "h-full origin-left rounded-full",
-                  a.target_type === "credit" ? "bg-sky-400" : covered ? "bg-emerald-500" : "bg-[#0066ff]",
+                  a.target_type === "credit" ? "bg-sky-400" : covered ? "bg-emerald-500" : "bg-brand",
                 )}
                 initial={{ scaleX: reduce ? pct : 0 }}
                 animate={{ scaleX: pct }}

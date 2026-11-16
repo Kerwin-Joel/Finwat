@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
-import FinwatLogo from "@/assets/FinwatLogo";
+import AuthShell from "@/components/layout/AuthShell";
 import { useToast } from "../hooks/use-toast";
 import { getAuthErrorMessage, isEmailNotConfirmed } from "@/lib/authErrors";
 import { resendConfirmation } from "@/api/authService";
@@ -68,24 +68,17 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-primary mb-2 flex items-center justify-center gap-1">
-            <FinwatLogo size={40} />
-            inwat
-          </h1>
-          <p className="text-sm font-medium bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-            Descubre a dónde se va tu dinero.
-          </p>
-        </div>
-
-        <Card className="border-border/50 shadow-xl bg-card/50 backdrop-blur-sm">
+    <AuthShell
+      title={
+        <>
+          Tus finanzas,
+          <br />
+          en orden
+        </>
+      }
+      subtitle="Descubre a dónde se va tu dinero: registra por WhatsApp, recibe recordatorios y haz crecer tu capital."
+    >
+        <Card className="shadow-float">
           <CardHeader>
             <CardTitle>Bienvenido de nuevo</CardTitle>
             <CardDescription>
@@ -155,7 +148,7 @@ const Login = () => {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -174,8 +167,7 @@ const Login = () => {
             </CardFooter>
           </form>
         </Card>
-      </motion.div>
-    </div>
+    </AuthShell>
   );
 };
 

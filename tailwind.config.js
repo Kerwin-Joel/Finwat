@@ -17,7 +17,24 @@ module.exports = {
     		}
     	},
     	extend: {
+    		fontFamily: {
+    			sans: ['var(--font-sans)'],
+    			mono: ['var(--font-mono)']
+    		},
+    		transitionTimingFunction: {
+    			'out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
+    			'in-out-soft': 'cubic-bezier(0.65, 0, 0.35, 1)'
+    		},
+    		boxShadow: {
+    			soft: '0 1px 2px hsl(var(--shadow-color) / 0.04), 0 8px 24px -12px hsl(var(--shadow-color) / 0.12)',
+    			float: '0 12px 40px -12px hsl(var(--shadow-color) / 0.35)'
+    		},
     		colors: {
+    			brand: {
+    				DEFAULT: 'hsl(var(--brand))',
+    				soft: 'hsl(var(--brand-soft))'
+    			},
+    			positive: 'hsl(var(--positive))',
     			border: 'hsl(var(--border))',
     			input: 'hsl(var(--input))',
     			ring: 'hsl(var(--ring))',

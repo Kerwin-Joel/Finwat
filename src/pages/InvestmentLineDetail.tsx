@@ -9,7 +9,9 @@ import useInvestmentStore from "@/stores/investmentStore";
 import { formatCents, formatRate } from "@/utils/money";
 import { formatDay } from "@/utils/investmentDates";
 import type { Contribution, Payment, PaymentKind } from "@/types/investment";
-import { CountUp, HealthIndicator } from "@/components/investments/primitives";
+import { CountUp } from "@/components/investments/primitives";
+import { Amount } from "@/components/ui/amount";
+import { EASE_OUT, SPRING_SNAPPY } from "@/lib/motion";
 import ContributionSheet from "@/components/investments/ContributionSheet";
 import PaymentSheet from "@/components/investments/PaymentSheet";
 import { RateChangeSheet, VoidSheet } from "@/components/investments/RateAndVoidSheets";
@@ -88,43 +90,43 @@ const InvestmentLineDetail = () => {
 
       {/* Encabezado */}
       <motion.header
-        className="rounded-2xl border border-border/60 bg-gradient-to-br from-[#00aaff]/15 via-[#0066ff]/10 to-[#003899]/10 p-5"
-        initial={reduce ? false : { opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
+        className="hero-aurora overflow-hidden rounded-[28px] p-5 shadow-float"
+        initial={reduce ? false : { opacity: 0, y: 12, scale: 0.985 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, ease: EASE_OUT }}
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold">{s.manager_display_name}</h1>
-            <p className="text-xs text-muted-foreground">
+            <h1 className="text-[22px] font-semibold tracking-[-0.03em]">{s.manager_display_name}</h1>
+            <p className="mt-0.5 text-[12px] text-white/65">
               {formatRate(s.default_monthly_rate)} mensual · {s.interest_on_return_mode === "periodo_completo" ? "mes completo" : "prorrateo diario"}
               {loading ? " · actualizando…" : ""}
             </p>
           </div>
-          {closed ? (
-            <span className="text-xs text-muted-foreground">Cerrada</span>
-          ) : s.status === "liquidada" ? (
-            <span className="text-xs text-emerald-400">Liquidada</span>
-          ) : (
-            <HealthIndicator health={s.health} />
-          )}
+          <span className="glass-on-hero rounded-full px-3 py-1 text-[11px] font-medium text-white/90">
+            {closed ? "Cerrada" : s.status === "liquidada" ? "Liquidada" : s.health === "vencido" ? "Con vencidos" : s.health === "por_vencer" ? "Por vencer" : "Al día"}
+          </span>
         </div>
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <div>
-            <p className="text-[11px] text-muted-foreground">Capital</p>
-            <CountUp cents={s.capital_outstanding_cents} currency={s.currency} className="text-sm font-bold" />
+        <p className="mt-6 text-[12px] text-white/65">Capital vigente</p>
+        <Amount
+          value={s.capital_outstanding_cents / 100}
+          currency={s.currency}
+          className="mt-0.5 text-[38px] font-light leading-none tracking-[-0.045em]"
+        />
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <div className="glass-on-hero rounded-2xl px-3.5 py-2.5">
+            <p className="text-[11px] text-white/65">Por cobrar</p>
+            <CountUp cents={s.pending_total_cents} currency={s.currency} className={cn("mt-0.5 block text-[14px] font-medium", s.overdue_cents > 0 ? "text-orange-200" : "text-white")} />
           </div>
-          <div>
-            <p className="text-[11px] text-muted-foreground">Por cobrar</p>
-            <CountUp cents={s.pending_total_cents} currency={s.currency} className={cn("text-sm font-bold", s.overdue_cents > 0 && "text-orange-400")} />
-          </div>
-          <div>
-            <p className="text-[11px] text-muted-foreground">Próxima</p>
-            <p className="text-sm font-bold">{s.next_due ? formatDay(s.next_due.due_date, "d MMM") : "—"}</p>
+          <div className="glass-on-hero rounded-2xl px-3.5 py-2.5">
+            <p className="text-[11px] text-white/65">Próxima cuota</p>
+            <p className="num mt-0.5 text-[14px] font-medium text-white">
+              {s.next_due ? `${formatCents(s.next_due.amount_cents, s.currency)} · ${formatDay(s.next_due.due_date, "d MMM")}` : "—"}
+            </p>
           </div>
         </div>
         {s.overdue_count > 0 && (
-          <p className="mt-3 text-xs text-orange-300">
+          <p className="mt-3 text-[12px] text-orange-200">
             {s.overdue_count} cuota(s) vencida(s) por {formatCents(s.overdue_cents, s.currency)}
           </p>
         )}
@@ -148,7 +150,7 @@ const InvestmentLineDetail = () => {
       )}
 
       {/* Tabs con indicador deslizante */}
-      <div role="tablist" aria-label="Secciones de la línea" className="-mx-4 flex gap-1 overflow-x-auto px-4">
+      <div role="tablist" aria-label="Secciones de la línea" className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map((t) => {
           const active = tab === t.id;
           return (
@@ -162,14 +164,14 @@ const InvestmentLineDetail = () => {
               onClick={() => setTab(t.id)}
               className={cn(
                 "relative min-h-11 shrink-0 rounded-full px-4 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground",
               )}
             >
               {active && (
                 <motion.span
                   layoutId="inv-tab-indicator"
-                  className="absolute inset-0 rounded-full bg-[#0066ff]/20"
-                  transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 40 }}
+                  className="absolute inset-0 rounded-full bg-primary"
+                  transition={reduce ? { duration: 0 } : SPRING_SNAPPY}
                 />
               )}
               <span className="relative">{t.label}</span>

@@ -1,9 +1,10 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import type { Transaction } from "../types/transaction";
 import useCategoryStore from "../stores/categoryStore";
 import { formatCurrency } from "../utils/formatCurrency";
-import { formatDateShort } from "../utils/dateUtils";
+import { formatDate } from "../utils/dateUtils";
 import WhatsAppIcon from "@/assets/WhatsAppIcon";
+import { EASE_OUT } from "@/lib/motion";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -17,72 +18,56 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
   onClick,
 }) => {
   const { getCategory } = useCategoryStore();
+  const reduce = useReducedMotion();
   const categoryData = getCategory(transaction.category);
   const isIncome = transaction.type === "income";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
+    <motion.button
+      type="button"
+      initial={reduce ? false : { opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.3 }}
-      className="flex items-center justify-between py-3 border-b border-border/40 last:border-0 hover:bg-muted/30 px-2 rounded-lg transition-colors cursor-pointer"
+      transition={{ delay: Math.min(index, 10) * 0.035, duration: 0.45, ease: EASE_OUT }}
+      className="flex w-full items-center justify-between gap-3 rounded-xl px-2.5 py-3 text-left transition-colors duration-200 hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:bg-accent"
       onClick={() => onClick?.(transaction)}
     >
-      <div className="flex items-center space-x-3 overflow-hidden">
+      <div className="flex min-w-0 items-center gap-3">
         <div
-          className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-lg shadow-sm overflow-hidden relative"
-          style={{
-            backgroundColor: `${categoryData.color}20`,
-            border: `1px solid ${categoryData.color}40`,
-          }}
+          className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl text-lg"
+          style={{ backgroundColor: `${categoryData.color}18` }}
         >
           {categoryData.type === "image" ? (
             <img
               src={categoryData.icon}
               alt={categoryData.label}
-              className="w-full h-full object-cover"
+              className="h-full w-full object-cover"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = "none";
               }}
             />
           ) : (
-            <span>{categoryData.icon}</span>
+            <span aria-hidden="true">{categoryData.icon}</span>
           )}
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-foreground truncate">
+          <p className="truncate text-[14px] font-medium tracking-[-0.01em] text-foreground">
             {transaction.description}
           </p>
-          {/* <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-            <span className="font-medium" style={{ color: categoryData.color }}>
-              {categoryData.label}
-            </span>
-            <span>•</span>
-            <span>{formatDateShort(transaction.transaction_date)}</span>
-          </div> */}
-          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-            {transaction.source === "whatsapp" && (
-              <>
-                <WhatsAppIcon color={categoryData.color} />
-              </>
-            )}
-            <span className="font-medium" style={{ color: categoryData.color }}>
-              {categoryData.label}
-            </span>
-            <span>•</span>
-            <span>{formatDateShort(transaction.transaction_date)}</span>
+          <div className="mt-0.5 flex items-center gap-1.5 text-[12px] text-muted-foreground">
+            {transaction.source === "whatsapp" && <WhatsAppIcon color={categoryData.color} />}
+            <span>{categoryData.label}</span>
+            <span aria-hidden="true">·</span>
+            <span>{formatDate(transaction.transaction_date + "T12:00:00")}</span>
           </div>
         </div>
       </div>
-      <div className="text-right shrink-0 ml-2">
-        <p
-          className={`text-sm font-bold ${isIncome ? "text-green-500" : "text-red-500"}`}
-        >
-          {isIncome ? "+" : "-"}
-          {formatCurrency(transaction.amount)}
-        </p>
-      </div>
-    </motion.div>
+      <p
+        className={`num shrink-0 text-[14px] font-semibold ${isIncome ? "text-positive" : "text-foreground"}`}
+      >
+        {isIncome ? "+" : "−"}
+        {formatCurrency(transaction.amount)}
+      </p>
+    </motion.button>
   );
 };
 

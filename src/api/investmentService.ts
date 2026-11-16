@@ -14,7 +14,7 @@ import type {
   RateChange,
   ReturnMode,
 } from "../types/investment";
-import { prepareVoucher } from "../utils/voucherFile";
+import { newId, prepareVoucher } from "../utils/voucherFile";
 
 // Toda escritura va por RPC atómicas en Postgres (el motor de intereses vive en la BD).
 // Las lecturas de detalle usan RLS: el usuario solo ve las líneas donde participa.
@@ -23,18 +23,24 @@ const VOUCHER_BUCKET = "investment-vouchers";
 
 /** Errores de Postgres → mensaje en español para el usuario */
 export const investmentErrorMessage = (error: unknown): string => {
-  const e = error as { message?: string; code?: string } | null;
+  const e = error as { message?: string; code?: string; details?: string } | null;
   const msg = e?.message ?? "";
   if (e?.code === "PGRST202" || /Could not find the function/i.test(msg)) {
     return "El módulo de inversiones aún no está activado en la base de datos.";
   }
-  if (/Failed to fetch|NetworkError/i.test(msg)) return "Sin conexión. Revisa tu internet e inténtalo de nuevo.";
+  // Solo es "sin conexión" si el fetch en sí falló (no cualquier error del cliente)
+  if (/^(TypeError: )?(Failed to fetch|Load failed|NetworkError when attempting to fetch resource\.?)$/i.test(msg)) {
+    return "No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.";
+  }
   return msg || "Ocurrió un error inesperado";
 };
 
 const rpc = async <T>(fn: string, args: Record<string, unknown>): Promise<T> => {
   const { data, error } = await supabase.rpc(fn, args);
-  if (error) throw new Error(investmentErrorMessage(error));
+  if (error) {
+    console.error(`[inversiones] ${fn}`, error);
+    throw new Error(investmentErrorMessage(error));
+  }
   return data as T;
 };
 
@@ -151,9 +157,9 @@ export const investmentService = {
     rpc<void>("void_movement", { p_type: type, p_id: id, p_reason: reason }),
 
   /** Comprime, calcula el hash y sube el voucher a investment-vouchers/{lineId}/... */
-  async uploadVoucher(lineId: string, file: File): Promise<{ path: string; hash: string }> {
+  async uploadVoucher(lineId: string, file: File): Promise<{ path: string; hash: string | null }> {
     const prepared = await prepareVoucher(file);
-    const path = `${lineId}/${crypto.randomUUID()}.${prepared.extension}`;
+    const path = `${lineId}/${newId()}.${prepared.extension}`;
     const { error } = await supabase.storage
       .from(VOUCHER_BUCKET)
       .upload(path, prepared.blob, { contentType: prepared.contentType, upsert: false });

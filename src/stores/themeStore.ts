@@ -19,7 +19,7 @@ interface ThemeState {
 const useThemeStore = create<ThemeState>()(
     persist(
         (set) => ({
-            theme: 'dark', // Default to dark as per original design preference
+            theme: 'light', // Rediseño 2026-11: claro con héroe marino (se puede cambiar en Perfil)
             customColors: {
                 primary: '262 83% 58%', // Default purple
                 background: '260 20% 98%', // Light purple background
@@ -30,6 +30,13 @@ const useThemeStore = create<ThemeState>()(
         }),
         {
             name: 'theme-storage',
+            // v1: con el rediseño, quien tenía el oscuro por defecto pasa una vez al claro.
+            version: 1,
+            migrate: (persisted, version) => {
+                const state = persisted as ThemeState;
+                if (version < 1 && state?.theme === 'dark') return { ...state, theme: 'light' };
+                return state;
+            },
         }
     )
 );

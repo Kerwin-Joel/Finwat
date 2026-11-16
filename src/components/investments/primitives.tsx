@@ -76,8 +76,8 @@ export const ProgressRing = ({
       <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
         <defs>
           <linearGradient id="inv-ring" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#00aaff" />
-            <stop offset="100%" stopColor="#0066ff" />
+            <stop offset="0%" stopColor="#5b8cff" />
+            <stop offset="100%" stopColor="#1a44c4" />
           </linearGradient>
         </defs>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} className="stroke-muted" />
@@ -204,8 +204,8 @@ export const Stat = ({
   tone?: "default" | "good" | "warn" | "muted";
   className?: string;
 }) => (
-  <div className={cn("rounded-xl border border-border/60 bg-card/60 p-3", className)}>
-    <p className="text-[11px] text-muted-foreground">{label}</p>
+  <div className={cn("surface flex flex-col justify-between gap-1.5 p-4", className)}>
+    <p className="eyebrow text-muted-foreground">{label}</p>
     <p
       className={cn(
         "mt-1 text-base font-bold tabular-nums",

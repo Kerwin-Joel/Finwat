@@ -241,7 +241,7 @@ const PaymentSheet = ({
         <ol className="mb-4 flex gap-2" aria-label="Pasos">
           {STEPS.map((label, i) => (
             <li key={label} className="flex-1" aria-current={i === step ? "step" : undefined}>
-              <div className={`h-1 rounded-full ${i <= step ? "bg-[#0066ff]" : "bg-muted"}`} />
+              <div className={`h-1 rounded-full ${i <= step ? "bg-brand" : "bg-muted"}`} />
               <p className={`mt-1 text-[11px] ${i === step ? "text-foreground" : "text-muted-foreground"}`}>{label}</p>
             </li>
           ))}
@@ -369,7 +369,7 @@ const PaymentSheet = ({
 
               {loadingPreview && <div className="h-24 animate-pulse rounded-xl bg-muted" aria-label="Calculando imputación" />}
               {!loadingPreview && preview && (
-                <div className="space-y-3 rounded-xl border border-border/60 bg-card/60 p-4">
+                <div className="space-y-3 surface p-4">
                   <p className="text-xs font-medium text-muted-foreground">Así se reparte</p>
                   <AllocationBars allocations={preview.allocations} currency={summary.currency} />
                 </div>

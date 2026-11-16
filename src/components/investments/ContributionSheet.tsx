@@ -225,7 +225,7 @@ const ContributionSheet = ({
 
           {/* Previsualización del impacto */}
           {p && (
-            <div className="space-y-3 rounded-xl border border-border/60 bg-card/60 p-4" aria-live="polite">
+            <div className="space-y-3 surface p-4" aria-live="polite">
               <p className="text-xs font-medium text-muted-foreground">Así queda</p>
               <div className="flex items-center gap-4">
                 <ProgressRing

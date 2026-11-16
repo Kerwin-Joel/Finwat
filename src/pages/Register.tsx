@@ -18,7 +18,7 @@ import { useToast } from "../hooks/use-toast";
 import PhoneInputField from "../components/ui/phone-input";
 import "react-phone-number-input/style.css";
 import { isValidPhoneNumber } from "react-phone-number-input";
-import FinwatLogo from "@/assets/FinwatLogo";
+import AuthShell from "@/components/layout/AuthShell";
 import { getAuthErrorMessage } from "@/lib/authErrors";
 import { resendConfirmation } from "@/api/authService";
 
@@ -99,24 +99,17 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-primary mb-2 flex items-center justify-center gap-1">
-            <FinwatLogo size={40} />
-            inwat
-          </h1>
-          <p className="text-sm font-medium bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-            Únete y toma el control.
-          </p>
-        </div>
-
-        <Card className="border-border/50 shadow-xl bg-card/50 backdrop-blur-sm">
+    <AuthShell
+      title={
+        <>
+          Toma el
+          <br />
+          control hoy
+        </>
+      }
+      subtitle="Crea tu cuenta gratis y empieza a ordenar tus gastos, recordatorios e inversiones en un solo lugar."
+    >
+        <Card className="shadow-float">
           {pendingEmail ? (
             <>
               <CardHeader>
@@ -233,7 +226,7 @@ const Register = () => {
               )}
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -254,8 +247,7 @@ const Register = () => {
           </>
           )}
         </Card>
-      </motion.div>
-    </div>
+    </AuthShell>
   );
 };
 

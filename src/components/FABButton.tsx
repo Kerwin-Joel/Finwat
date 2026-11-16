@@ -32,8 +32,8 @@ const fabOptions = [
     id: "manual",
     label: "Agregar manualmente",
     icon: <PenLine className="w-5 h-5 text-white" />,
-    className: "bg-green-600 hover:bg-green-700 shadow-green-900/20",
-    pulse: "bg-green-500/20",
+    className: "bg-primary hover:bg-primary/90",
+    pulse: "bg-transparent",
   },
 ];
 
@@ -61,7 +61,7 @@ const FABButton: React.FC<FABButtonProps> = ({ onClick }) => {
         )}
       </AnimatePresence>
 
-      <div className="fixed bottom-20 right-4 z-40 flex flex-col items-end gap-3">
+      <div className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] right-[max(1rem,calc(50vw-14rem+1rem))] z-40 flex flex-col items-end gap-3">
         <AnimatePresence>
           {isOpen &&
             fabOptions.map((option, index) => (
@@ -138,16 +138,17 @@ const FABButton: React.FC<FABButtonProps> = ({ onClick }) => {
           <Button
             size="icon"
             onClick={() => setIsOpen(!isOpen)}
-            className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 shadow-lg shadow-green-900/20 border-0"
+            aria-label={isOpen ? "Cerrar opciones" : "Registrar movimiento"}
+            aria-expanded={isOpen}
+            className="h-14 w-14 rounded-full border-0 bg-primary shadow-float hover:bg-primary/90 [&_svg]:size-6"
           >
             <motion.div
               animate={{ rotate: isOpen ? 45 : 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              transition={{ type: "spring", stiffness: 260, damping: 26 }}
             >
-              <Plus className="h-8 w-8 text-white" />
+              <Plus className="text-primary-foreground" />
             </motion.div>
           </Button>
-          <div className="absolute inset-0 rounded-full bg-green-500/20 animate-ping -z-10" />
         </motion.div>
       </div>
     </>

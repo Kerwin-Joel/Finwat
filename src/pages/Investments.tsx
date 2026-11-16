@@ -10,9 +10,11 @@ import { formatDay, relativeDay } from "@/utils/investmentDates";
 import type { CurrencyKpis, InvestmentCurrency, LineSummary } from "@/types/investment";
 import { CountUp, EmptyState, HealthIndicator, ProgressRing } from "@/components/investments/primitives";
 import NewLineSheet from "@/components/investments/NewLineSheet";
+import { Amount } from "@/components/ui/amount";
+import { EASE_OUT, riseItem, staggerContainer } from "@/lib/motion";
 
-const stagger = { show: { transition: { staggerChildren: 0.04 } } };
-const item = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
+const stagger = staggerContainer;
+const item = riseItem;
 
 const KPIS: { key: keyof CurrencyKpis; label: string; tone?: "warn" | "good" }[] = [
   { key: "capital_outstanding_cents", label: "Capital colocado" },
@@ -20,7 +22,7 @@ const KPIS: { key: keyof CurrencyKpis; label: string; tone?: "warn" | "good" }[]
   { key: "month_collected_cents", label: "Cobrado del mes", tone: "good" },
   { key: "month_pending_cents", label: "Pendiente del mes" },
   { key: "overdue_cents", label: "Vencido", tone: "warn" },
-  { key: "interest_collected_total_cents", label: "Rendimiento acumulado", tone: "good" },
+  { key: "interest_collected_total_cents", label: "Rendimiento", tone: "good" },
 ];
 
 const LineCard = ({ line, onOpen }: { line: LineSummary; onOpen: () => void }) => {
@@ -30,7 +32,7 @@ const LineCard = ({ line, onOpen }: { line: LineSummary; onOpen: () => void }) =
       <button
         type="button"
         onClick={onOpen}
-        className="flex w-full items-center gap-4 rounded-2xl border border-border/60 bg-card/60 p-4 text-left transition-colors hover:bg-card focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="surface flex w-full items-center gap-4 p-4 text-left transition-transform duration-200 ease-out-expo active:scale-[0.985] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={`Abrir línea con ${line.manager_display_name}`}
       >
         <ProgressRing
@@ -110,7 +112,7 @@ const Investments = () => {
     <div className="space-y-5 pb-24 pt-2">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Inversiones</h1>
+          <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Inversiones</h1>
           <p className="text-sm text-muted-foreground">Tu capital con gestores</p>
         </div>
         <Button className="h-11 gap-1" onClick={() => setShowNew(true)}>
@@ -129,26 +131,58 @@ const Investments = () => {
 
       {/* KPIs */}
       {loadingFirst ? (
-        <div className="grid grid-cols-2 gap-3">
-          {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="h-[68px] rounded-xl" />
-          ))}
+        <div className="space-y-3" aria-busy="true" aria-label="Cargando resumen">
+          <div className="hero-aurora h-[196px] rounded-[28px] opacity-80" />
+          <div className="grid grid-cols-2 gap-3">
+            <Skeleton className="h-[76px] rounded-2xl" />
+            <Skeleton className="h-[76px] rounded-2xl" />
+          </div>
         </div>
       ) : (
         currencies.map((cur) => {
           const k = overview!.kpis[cur]!;
           return (
-            <section key={cur} aria-label={`Resumen en ${cur === "PEN" ? "soles" : "dólares"}`}>
-              {currencies.length > 1 && <p className="mb-2 text-xs text-muted-foreground">{cur === "PEN" ? "Soles" : "Dólares"}</p>}
+            <section key={cur} aria-label={`Resumen en ${cur === "PEN" ? "soles" : "dólares"}`} className="space-y-3">
+              {/* Héroe: capital colocado */}
+              <motion.div
+                className="hero-aurora overflow-hidden rounded-[28px] p-5 shadow-float"
+                initial={{ opacity: 0, y: 12, scale: 0.985 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.6, ease: EASE_OUT }}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-[13px] text-white/65">
+                    Capital colocado{currencies.length > 1 ? ` · ${cur === "PEN" ? "soles" : "dólares"}` : ""}
+                  </p>
+                  <span className="glass-on-hero rounded-full px-2.5 py-1 text-[11px] text-white/85">Este mes</span>
+                </div>
+                <Amount
+                  value={k.capital_outstanding_cents / 100}
+                  currency={cur}
+                  className="mt-1 text-[42px] font-light leading-none tracking-[-0.045em]"
+                />
+                <div className="mt-6 grid grid-cols-3 gap-2">
+                  {[
+                    { label: "Esperado", v: k.monthly_interest_expected_cents },
+                    { label: "Cobrado", v: k.month_collected_cents },
+                    { label: "Pendiente", v: k.month_pending_cents },
+                  ].map((s) => (
+                    <div key={s.label} className="glass-on-hero rounded-2xl px-3 py-2.5">
+                      <p className="text-[10.5px] leading-tight text-white/65">{s.label}</p>
+                      <CountUp cents={s.v} currency={cur} className="mt-1 block text-[13px] font-medium text-white" />
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
               <motion.div className="grid grid-cols-2 gap-3" initial="hidden" animate="show" variants={stagger}>
-                {KPIS.map((kpi) => (
-                  <motion.div key={kpi.key} variants={item} className="rounded-xl border border-border/60 bg-card/60 p-3">
-                    <p className="text-[11px] text-muted-foreground">{kpi.label}</p>
+                {KPIS.filter((kpi) => kpi.key === "overdue_cents" || kpi.key === "interest_collected_total_cents").map((kpi) => (
+                  <motion.div key={kpi.key} variants={item} className="surface p-4">
+                    <p className="eyebrow text-muted-foreground">{kpi.label}</p>
                     <CountUp
                       cents={k[kpi.key]}
                       currency={cur}
-                      className={`mt-1 block text-base font-bold ${
-                        kpi.tone === "warn" && k[kpi.key] > 0 ? "text-orange-400" : kpi.tone === "good" && k[kpi.key] > 0 ? "text-emerald-400" : ""
+                      className={`mt-1.5 block text-[17px] font-semibold ${
+                        kpi.tone === "warn" && k[kpi.key] > 0 ? "text-orange-500" : kpi.tone === "good" && k[kpi.key] > 0 ? "text-positive" : ""
                       }`}
                     />
                   </motion.div>
@@ -161,7 +195,7 @@ const Investments = () => {
 
       {/* Próximos vencimientos */}
       {upcoming.length > 0 && (
-        <section aria-labelledby="inv-upcoming" className="rounded-xl border border-border/60 bg-card/60 p-4">
+        <section aria-labelledby="inv-upcoming" className="surface p-4">
           <h2 id="inv-upcoming" className="mb-2 text-sm font-semibold">
             Próximos vencimientos
           </h2>
