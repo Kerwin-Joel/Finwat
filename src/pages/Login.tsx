@@ -1,25 +1,20 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { AlertCircle, Loader2 } from "lucide-react";
 import useAuthStore from "../stores/authStore";
 import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
-import AuthShell from "@/components/layout/AuthShell";
 import { useToast } from "../hooks/use-toast";
+import AuthShell from "@/components/layout/AuthShell";
+import BottomSheet from "@/components/investments/BottomSheet";
+import { AuthInput, FieldBox } from "@/components/auth/AuthField";
 import { getAuthErrorMessage, isEmailNotConfirmed } from "@/lib/authErrors";
 import { resendConfirmation } from "@/api/authService";
+import { EASE_OUT } from "@/lib/motion";
 
 const Login = () => {
+  const [params] = useSearchParams();
+  const [sheetOpen, setSheetOpen] = useState(params.has("ingresar"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -67,107 +62,139 @@ const Login = () => {
     }
   };
 
-  return (
-    <AuthShell
-      title={
-        <>
-          Tus finanzas,
-          <br />
-          en orden
-        </>
-      }
-      subtitle="Descubre a dónde se va tu dinero: registra por WhatsApp, recibe recordatorios y haz crecer tu capital."
-    >
-        <Card className="shadow-float">
-          <CardHeader>
-            <CardTitle>Bienvenido de nuevo</CardTitle>
-            <CardDescription>
-              Ingresa tus credenciales para continuar
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleSubmit} noValidate>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Correo electrónico</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="ejemplo@correo.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Contraseña</Label>
-                  <Link
-                    to="/forgot-password"
-                    className="text-xs font-medium text-primary hover:underline"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-                {loginError && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-3 py-2 rounded-lg"
-                  >
-                    <span>⚠️</span>
-                    <span>{loginError}</span>
-                  </motion.div>
-                )}
+  // El mismo formulario se usa en la hoja (móvil) y en el panel derecho (escritorio)
+  const form = (prefix: string, withHeading: boolean) => (
+    <form onSubmit={handleSubmit} noValidate className="space-y-3">
+      {withHeading && (
+        <div className="mb-6">
+          <h2 className="text-[28px] font-bold tracking-[-0.035em]">Hola de nuevo</h2>
+          <p className="mt-1 text-[14px] text-muted-foreground">Ingresa con tu correo</p>
+        </div>
+      )}
+      <FieldBox label="Correo" htmlFor={`${prefix}-email`} invalid={!!loginError && !email.trim()}>
+        <AuthInput
+          id={`${prefix}-email`}
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          placeholder="ejemplo@correo.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </FieldBox>
+      <FieldBox
+        label="Contraseña"
+        htmlFor={`${prefix}-password`}
+        invalid={!!loginError && !password}
+        trailing={
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="shrink-0 rounded-full px-2 py-1 text-[12.5px] font-semibold text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-pressed={showPassword}
+          >
+            {showPassword ? "Ocultar" : "Mostrar"}
+          </button>
+        }
+      >
+        <AuthInput
+          id={`${prefix}-password`}
+          type={showPassword ? "text" : "password"}
+          autoComplete="current-password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </FieldBox>
+
+      <div className="flex justify-end">
+        <Link to="/forgot-password" className="py-1 text-[12.5px] font-semibold text-brand hover:underline">
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </div>
+
+      <AnimatePresence initial={false}>
+        {loginError && (
+          <motion.div
+            key="error"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: EASE_OUT }}
+            className="overflow-hidden"
+            role="alert"
+          >
+            <div className="flex items-start gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-[13px] text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <div>
+                <p>{loginError}</p>
                 {needsConfirmation && (
                   <button
                     type="button"
                     onClick={handleResend}
                     disabled={isResending}
-                    className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
+                    className="mt-1 font-semibold underline-offset-2 hover:underline disabled:opacity-50"
                   >
                     {isResending ? "Reenviando…" : "Reenviar correo de confirmación"}
                   </button>
                 )}
               </div>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  "Iniciar Sesión"
-                )}
-              </Button>
-              <div className="text-center text-sm text-muted-foreground">
-                ¿No tienes una cuenta?{" "}
-                <Link
-                  to="/register"
-                  className="text-primary hover:underline font-medium"
-                >
-                  Regístrate
-                </Link>
-              </div>
-            </CardFooter>
-          </form>
-        </Card>
-    </AuthShell>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <Button type="submit" size="lg" className="mt-2 w-full" disabled={isLoading}>
+        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-label="Ingresando" /> : "Ingresar"}
+      </Button>
+      <p className="pt-2 text-center text-[13.5px] text-muted-foreground">
+        ¿No tienes cuenta?{" "}
+        <Link to="/register" className="font-semibold text-foreground hover:underline">
+          Crear cuenta
+        </Link>
+      </p>
+    </form>
+  );
+
+  return (
+    <>
+      <AuthShell
+        fullHero
+        title={
+          <>
+            Tu dinero,
+            <br />
+            por fin claro.
+          </>
+        }
+        subtitle="Registra por WhatsApp, recibe recordatorios y haz crecer tu capital."
+        heroActions={
+          <div className="space-y-1.5">
+            <Button
+              asChild
+              size="lg"
+              className="w-full bg-white text-[#0b1640] shadow-[0_10px_30px_-12px_rgba(0,0,0,0.5)] hover:bg-white/90"
+            >
+              <Link to="/register">Crear cuenta</Link>
+            </Button>
+            <Button
+              size="lg"
+              variant="ghost"
+              className="w-full text-white hover:bg-white/10 hover:text-white"
+              onClick={() => setSheetOpen(true)}
+            >
+              Ya tengo cuenta
+            </Button>
+          </div>
+        }
+      >
+        {form("d", true)}
+      </AuthShell>
+
+      <BottomSheet open={sheetOpen} onOpenChange={setSheetOpen} title="Hola de nuevo" description="Ingresa con tu correo">
+        <div className="pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-3">{form("m", false)}</div>
+      </BottomSheet>
+    </>
   );
 };
 

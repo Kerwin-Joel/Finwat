@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400..600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,400&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -12,8 +12,8 @@
 
 @layer base {
   :root {
-    --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-    --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
     --background: 222 33% 97%;
     --foreground: 228 48% 10%;
@@ -110,7 +110,6 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
-    font-feature-settings: "ss01", "cv11";
     text-rendering: optimizeLegibility;
   }
 
@@ -173,7 +172,7 @@
 
   .num {
     font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum", "ss01";
+    font-feature-settings: "tnum";
     letter-spacing: -0.02em;
   }
 

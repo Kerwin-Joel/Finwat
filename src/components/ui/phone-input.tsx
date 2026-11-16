@@ -22,15 +22,30 @@ const CustomInput = forwardRef<
 
 CustomInput.displayName = "CustomInput";
 
-const PhoneInputField = ({ value, onChange, className }: PhoneInputProps) => {
+// Variante sin caja: para campos "rellenos" donde el contenedor ya dibuja el fondo
+const BareInput = forwardRef<
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement>
+>((props, ref) => (
+  <input
+    {...props}
+    ref={ref}
+    className="w-full bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground/60"
+  />
+));
+
+BareInput.displayName = "BareInput";
+
+const PhoneInputField = ({ value, onChange, className, bare, id }: PhoneInputProps & { bare?: boolean; id?: string }) => {
   return (
     <PhoneInput
+      id={id}
       international
       defaultCountry="PE"
       value={value}
       onChange={(val) => onChange(val ?? "")}
-      className={cn("flex gap-2", className)}
-      inputComponent={CustomInput}
+      className={cn("flex gap-2", bare && "items-center", className)}
+      inputComponent={bare ? BareInput : CustomInput}
     />
   );
 };

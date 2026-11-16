@@ -61,7 +61,7 @@ const BottomSheet = ({ open, onOpenChange, title, description, children, footer,
                   <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-muted" aria-hidden="true" />
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <DialogPrimitive.Title className="text-lg font-semibold">{title}</DialogPrimitive.Title>
+                      <DialogPrimitive.Title className="text-[21px] font-bold tracking-[-0.03em]">{title}</DialogPrimitive.Title>
                       {description ? (
                         <DialogPrimitive.Description className="text-sm text-muted-foreground">
                           {description}
