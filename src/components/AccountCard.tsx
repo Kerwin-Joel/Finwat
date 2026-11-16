@@ -47,7 +47,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.6, ease: EASE_OUT }}
       aria-label={`${account.name}, ${accountSubtitle(account)}`}
-      className={cn(styleClass, "overflow-hidden rounded-[28px] p-5 shadow-float transition-[background] duration-500 md:p-7", className)}
+      className={cn(styleClass, "flex flex-col overflow-hidden rounded-[28px] p-5 shadow-float transition-[background] duration-500 md:p-7", className)}
     >
       {/* Marca de agua del logo */}
       <div className="pointer-events-none absolute -right-12 -top-12 opacity-[0.07]" aria-hidden="true">
@@ -106,7 +106,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
 
       {/* Pie: banco, últimos dígitos y red */}
       {(account.bank_name || account.last4 || (account.card_network && account.card_network !== "otra")) && (
-        <div className="relative mt-5 flex items-center justify-between gap-3 text-[12.5px] text-white/75">
+        <div className="relative mt-auto flex items-center justify-between gap-3 pt-5 text-[12.5px] text-white/75">
           <span className="flex min-w-0 items-center gap-2">
             {TypeIcon && <TypeIcon className="h-4 w-4 shrink-0" aria-hidden="true" />}
             <span className="truncate">{account.bank_name}</span>
