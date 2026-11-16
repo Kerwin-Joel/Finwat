@@ -244,6 +244,19 @@ export interface PaymentInput {
   notes?: string | null;
 }
 
+/** Fila de audit_log (antes/después de cada cambio) */
+export interface AuditEntry {
+  id: number;
+  table_name: "contributions" | "payments" | "rate_changes" | "investment_lines" | string;
+  record_id: string | null;
+  line_id: string | null;
+  action: "INSERT" | "UPDATE" | "DELETE";
+  actor: string | null;
+  old_data: Record<string, unknown> | null;
+  new_data: Record<string, unknown> | null;
+  changed_at: string;
+}
+
 export interface LineDetail {
   summary: LineSummary;
   contributions: Contribution[];

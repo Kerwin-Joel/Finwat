@@ -22,12 +22,15 @@ import {
   SettingsTab,
   SummaryTab,
 } from "@/components/investments/LineTabs";
+import { AuditTab, HistoryTab } from "@/components/investments/HistoryTabs";
 
 const TABS = [
   { id: "resumen", label: "Resumen" },
   { id: "aportes", label: "Aportes" },
   { id: "calendario", label: "Calendario" },
   { id: "pagos", label: "Pagos" },
+  { id: "historial", label: "Historial" },
+  { id: "auditoria", label: "Auditoría" },
   { id: "ajustes", label: "Ajustes" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
@@ -216,6 +219,8 @@ const InvestmentLineDetail = () => {
             }
           />
         )}
+        {tab === "historial" && <HistoryTab detail={detail} />}
+        {tab === "auditoria" && <AuditTab detail={detail} />}
         {tab === "ajustes" && (
           <SettingsTab
             key={`${s.line_id}-${s.status}`}

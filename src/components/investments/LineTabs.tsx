@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { addMonths, endOfMonth, format, getDay, parseISO, startOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronDown, ChevronLeft, ChevronRight, FileImage, Pencil, Percent, Plus, Receipt, Wallet, XCircle } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, FileImage, Pencil, Percent, Plus, Receipt, Trash2, Wallet, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -158,7 +158,9 @@ export const ContributionsTab = ({
       }
     }
     const rank = (c: Contribution) => (c.status === "anulado" ? 2 : nextDue.has(c.id) ? 0 : 1);
-    return [...contributions]
+    // Los eliminados (anulados) no se listan aquí: viven en la pestaña Auditoría
+    return contributions
+      .filter((c) => c.status !== "anulado")
       .map((c) => ({ c, next: nextDue.get(c.id) ?? null }))
       .sort((a, b) => {
         const r = rank(a.c) - rank(b.c);
@@ -175,7 +177,7 @@ export const ContributionsTab = ({
         ? `${formatCents(Number(c.fixed_amount_cents), s.currency)} fijo al mes`
         : `${formatRate(Number(c.monthly_rate))} mensual`;
 
-  if (contributions.length === 0) {
+  if (ordered.length === 0) {
     return (
       <EmptyState
         icon={<Wallet className="h-10 w-10" />}
@@ -272,8 +274,8 @@ export const ContributionsTab = ({
                             </Button>
                           )}
                           {c.recon_status !== "confirmado" && (
-                            <Button variant="ghost" size="sm" className="h-11 gap-1 text-muted-foreground" onClick={() => onVoid(c)}>
-                              <XCircle className="h-4 w-4" /> Anular
+                            <Button variant="ghost" size="sm" className="h-11 gap-1 text-muted-foreground hover:text-destructive" onClick={() => onVoid(c)}>
+                              <Trash2 className="h-4 w-4" /> Eliminar
                             </Button>
                           )}
                         </div>
@@ -431,7 +433,9 @@ export const PaymentsTab = ({
   onAdd: () => void;
   onVoid: (p: Payment) => void;
 }) => {
-  const { payments, schedules, contributions, summary: s } = detail;
+  const { schedules, contributions, summary: s } = detail;
+  // Los pagos eliminados (anulados) se ven en la pestaña Auditoría
+  const payments = useMemo(() => detail.payments.filter((p) => p.status !== "anulado"), [detail.payments]);
   const { toast } = useToast();
   const [viewer, setViewer] = useState<{ url: string; pdf: boolean } | null>(null);
   const [zoom, setZoom] = useState(false);
@@ -519,8 +523,8 @@ export const PaymentsTab = ({
                   </Button>
                 )}
                 {!anulado && p.recon_status !== "confirmado" && (
-                  <Button variant="ghost" size="sm" className="h-11 gap-1 text-muted-foreground" onClick={() => onVoid(p)}>
-                    <XCircle className="h-4 w-4" /> Anular
+                  <Button variant="ghost" size="sm" className="h-11 gap-1 text-muted-foreground hover:text-destructive" onClick={() => onVoid(p)}>
+                    <Trash2 className="h-4 w-4" /> Eliminar
                   </Button>
                 )}
               </div>

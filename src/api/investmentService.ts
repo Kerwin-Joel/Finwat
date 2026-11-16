@@ -1,5 +1,6 @@
 import { supabase } from "../lib/supabase";
 import type {
+  AuditEntry,
   Contribution,
   ContributionInput,
   ContributionResult,
@@ -72,6 +73,19 @@ export const investmentService = {
       payments: (payments.data ?? []) as Payment[],
       rateChanges: (rates.data ?? []) as RateChange[],
     };
+  },
+
+  /** Cambios relevantes de la línea (sin el ruido de cuotas e imputaciones internas) */
+  async getAuditLog(lineId: string): Promise<AuditEntry[]> {
+    const { data, error } = await supabase
+      .from("audit_log")
+      .select("*")
+      .eq("line_id", lineId)
+      .in("table_name", ["contributions", "payments", "rate_changes", "investment_lines"])
+      .order("changed_at", { ascending: false })
+      .limit(300);
+    if (error) throw new Error(investmentErrorMessage(error));
+    return (data ?? []) as AuditEntry[];
   },
 
   createLine: (input: CreateLineInput) =>
