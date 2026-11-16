@@ -44,6 +44,7 @@ const InvestmentLineDetail = () => {
 
   const [tab, setTab] = useState<TabId>("resumen");
   const [showContribution, setShowContribution] = useState(false);
+  const [editContribution, setEditContribution] = useState<Contribution | null>(null);
   const [paymentKind, setPaymentKind] = useState<PaymentKind | null>(null);
   const [rateTarget, setRateTarget] = useState<{ contribution: Contribution | null } | null>(null);
   const [voidTarget, setVoidTarget] = useState<{ type: "contribution" | "payment"; id: string; label: string } | null>(null);
@@ -190,6 +191,7 @@ const InvestmentLineDetail = () => {
           <ContributionsTab
             detail={detail}
             onAdd={() => setShowContribution(true)}
+            onEdit={(c) => setEditContribution(c)}
             onChangeRate={(c) => setRateTarget({ contribution: c })}
             onVoid={(c: Contribution) =>
               setVoidTarget({
@@ -228,6 +230,16 @@ const InvestmentLineDetail = () => {
 
       {isInvestor && (
         <ContributionSheet open={showContribution} onOpenChange={setShowContribution} summary={s} onDone={refresh} />
+      )}
+      {isInvestor && editContribution && (
+        <ContributionSheet
+          key={editContribution.id}
+          open
+          onOpenChange={(o) => !o && setEditContribution(null)}
+          summary={s}
+          contribution={editContribution}
+          onDone={refresh}
+        />
       )}
       <PaymentSheet
         open={paymentKind !== null}

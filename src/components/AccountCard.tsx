@@ -63,6 +63,8 @@ const AccountCard: React.FC<AccountCardProps> = ({
             {account.name || "Nueva cuenta"} · {accountSubtitle(account)}
           </span>
         </span>
+        {/* En vista previa se reserva el mismo espacio: la altura no cambia al pasar al frente */}
+        {preview && <span className="h-10 w-10 shrink-0" aria-hidden="true" />}
         {!preview && (
           <button
             type="button"

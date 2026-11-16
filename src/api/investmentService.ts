@@ -119,6 +119,26 @@ export const investmentService = {
       p_voucher_hash: input.voucher_hash ?? null,
       p_notes: input.notes ?? null,
       p_dry_run: dryRun,
+      p_return_type: input.return_type ?? "tasa",
+      p_fixed_amount_cents: input.fixed_amount_cents ?? null,
+    }),
+
+  /** Edita un aporte: datos no financieros en el lugar; si cambia monto/fecha/rendimiento, lo corrige */
+  updateContribution: (contributionId: string, input: ContributionInput, reason?: string) =>
+    rpc<{ contribution_id: string; corrected: boolean }>("update_contribution", {
+      p_contribution_id: contributionId,
+      p_amount_cents: input.amount_cents,
+      p_contributed_at: input.contributed_at,
+      p_return_type: input.return_type ?? "tasa",
+      p_monthly_rate: input.monthly_rate ?? null,
+      p_fixed_amount_cents: input.fixed_amount_cents ?? null,
+      p_anchor_day: input.anchor_day ?? null,
+      p_grace_months: input.grace_months ?? 0,
+      p_method: input.method,
+      p_source_bank: input.source_bank ?? null,
+      p_operation_code: input.operation_code ?? null,
+      p_notes: input.notes ?? null,
+      p_reason: reason ?? null,
     }),
 
   registerPayment: (input: PaymentInput, dryRun: boolean) =>

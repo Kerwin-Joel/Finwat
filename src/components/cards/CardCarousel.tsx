@@ -104,10 +104,10 @@ const CardCarousel = ({
       </div>
 
       {/* Controles */}
-      <div className="mt-3 flex min-h-9 items-center justify-between gap-3">
+      <div className="mt-3 flex h-9 flex-nowrap items-center justify-between gap-3">
         {multiple ? (
-          <div className="flex items-center gap-0.5">
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => go(-1)} aria-label="Tarjeta anterior">
+          <div className="flex min-w-0 items-center gap-0.5">
+            <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => go(-1)} aria-label="Tarjeta anterior">
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <div className="flex items-center" role="tablist" aria-label="Elegir tarjeta">
@@ -130,10 +130,10 @@ const CardCarousel = ({
                 </button>
               ))}
             </div>
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => go(1)} aria-label="Tarjeta siguiente">
+            <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => go(1)} aria-label="Tarjeta siguiente">
               <ChevronRight className="h-4 w-4" />
             </Button>
-            <span className="ml-1 text-[12px] text-muted-foreground" aria-live="polite">
+            <span className="ml-1 min-w-0 truncate text-[12px] text-muted-foreground" aria-live="polite">
               {accounts[current]?.name}
             </span>
           </div>

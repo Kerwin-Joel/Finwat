@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { addMonths, endOfMonth, format, getDay, parseISO, startOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronDown, ChevronLeft, ChevronRight, FileImage, Percent, Plus, Receipt, Wallet, XCircle } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, FileImage, Pencil, Percent, Plus, Receipt, Wallet, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -132,11 +132,13 @@ export const SummaryTab = ({ detail }: { detail: LineDetail }) => {
 export const ContributionsTab = ({
   detail,
   onAdd,
+  onEdit,
   onChangeRate,
   onVoid,
 }: {
   detail: LineDetail;
   onAdd: () => void;
+  onEdit: (c: Contribution) => void;
   onChangeRate: (c: Contribution) => void;
   onVoid: (c: Contribution) => void;
 }) => {
@@ -144,6 +146,34 @@ export const ContributionsTab = ({
   const reduce = useReducedMotion();
   const [open, setOpen] = useState<string | null>(null);
   const isInvestor = s.role === "investor";
+
+  // Orden por próximo vencimiento: primero los que vencen antes; luego los sin cuotas
+  // pendientes (sin interés o liquidados) del más reciente al más antiguo; anulados al final.
+  const ordered = useMemo(() => {
+    const nextDue = new Map<string, string>();
+    for (const sc of schedules) {
+      if ((sc.status === "programada" || sc.status === "parcial") && sc.outstanding_cents > 0) {
+        const cur = nextDue.get(sc.contribution_id);
+        if (!cur || sc.due_date < cur) nextDue.set(sc.contribution_id, sc.due_date);
+      }
+    }
+    const rank = (c: Contribution) => (c.status === "anulado" ? 2 : nextDue.has(c.id) ? 0 : 1);
+    return [...contributions]
+      .map((c) => ({ c, next: nextDue.get(c.id) ?? null }))
+      .sort((a, b) => {
+        const r = rank(a.c) - rank(b.c);
+        if (r !== 0) return r;
+        if (a.next && b.next) return a.next.localeCompare(b.next);
+        return b.c.contributed_at.localeCompare(a.c.contributed_at);
+      });
+  }, [contributions, schedules]);
+
+  const returnLabel = (c: Contribution) =>
+    c.return_type === "sin_interes"
+      ? "Sin interés"
+      : c.return_type === "monto_fijo"
+        ? `${formatCents(Number(c.fixed_amount_cents), s.currency)} fijo al mes`
+        : `${formatRate(Number(c.monthly_rate))} mensual`;
 
   if (contributions.length === 0) {
     return (
@@ -164,7 +194,7 @@ export const ContributionsTab = ({
 
   return (
     <motion.ol className="relative space-y-3 border-l border-border/60 pl-4" initial="hidden" animate="show" variants={stagger}>
-      {[...contributions].reverse().map((c) => {
+      {ordered.map(({ c, next }) => {
         const own = schedules.filter((x) => x.contribution_id === c.id);
         const expanded = open === c.id;
         const anulado = c.status === "anulado";
@@ -189,9 +219,14 @@ export const ContributionsTab = ({
                     {formatCents(c.amount_cents, s.currency)}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {formatDay(c.contributed_at)} · {formatRate(c.monthly_rate)} mensual · {METHOD_LABEL[c.method]}
+                    {formatDay(c.contributed_at)} · {returnLabel(c)} · {METHOD_LABEL[c.method]}
                     {c.grace_months > 0 ? ` · ${c.grace_months} mes(es) de gracia` : ""}
                   </p>
+                  {next && !anulado && (
+                    <p className="mt-0.5 text-[11.5px] font-medium text-foreground/80">
+                      Próximo vencimiento: {formatDay(next, "d MMM")} · {relativeDay(next, s.today)}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   {anulado ? (
@@ -225,8 +260,13 @@ export const ContributionsTab = ({
                         </ul>
                       )}
                       {isInvestor && !anulado && (
-                        <div className="flex gap-2 pt-1">
-                          {c.status === "activo" && (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {c.recon_status !== "confirmado" && (
+                            <Button variant="outline" size="sm" className="h-11 gap-1" onClick={() => onEdit(c)}>
+                              <Pencil className="h-4 w-4" /> Editar
+                            </Button>
+                          )}
+                          {c.status === "activo" && c.return_type === "tasa" && (
                             <Button variant="outline" size="sm" className="h-11 gap-1" onClick={() => onChangeRate(c)}>
                               <Percent className="h-4 w-4" /> Cambiar tasa
                             </Button>

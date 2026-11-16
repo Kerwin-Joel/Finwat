@@ -31,6 +31,7 @@ import type { TransactionFilters, SortOption, Transaction } from "../types/trans
 import OnboardingModal from "@/components/OnboardingModal";
 import EditTransactionModal from "@/components/EditTransactionModal";
 import WhatsAppIcon from "@/assets/WhatsAppIcon";
+import FinwatLogo from "@/assets/FinwatLogo";
 import { riseItem, staggerContainer } from "@/lib/motion";
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_BOT_NUMBER;
@@ -148,29 +149,49 @@ const Home = () => {
 
   return (
     <div className="relative space-y-5 pb-6 md:space-y-7">
-      {/* Encabezado */}
-      <header className="flex items-center justify-between gap-4 pt-1">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-11 w-11 border border-border/70 shadow-soft md:hidden">
-            <AvatarImage src={user?.photoUrl} />
-            <AvatarFallback className="bg-primary text-[15px] font-semibold text-primary-foreground">
-              {user?.name?.charAt(0) || "U"}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="text-[12px] text-muted-foreground md:text-[13px] md:first-letter:uppercase">
-              <span className="md:hidden">{greeting()}</span>
-              <span className="hidden md:inline">{today}</span>
-            </p>
-            <h1 className="text-[17px] font-semibold leading-tight tracking-[-0.02em] md:text-[28px] md:font-bold md:tracking-[-0.035em]">
-              <span className="hidden md:inline">{greeting()}, </span>
-              {firstName || "Hola"}
-            </h1>
-          </div>
+      {/* Barra de marca (móvil): en escritorio el logo vive en la barra lateral */}
+      <div className="flex items-center justify-between md:hidden">
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 rounded-xl py-1 pr-2 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label="Finwat, inicio"
+        >
+          <FinwatLogo size={26} />
+          <span className="text-[18px] font-bold tracking-[-0.035em]">Finwat</span>
+        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate("/profile")}
+            aria-label="Ir a tu perfil"
+            className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Avatar className="h-10 w-10 border border-border/70 shadow-soft">
+              <AvatarImage src={user?.photoUrl} />
+              <AvatarFallback className="bg-primary text-[14px] font-semibold text-primary-foreground">
+                {user?.name?.charAt(0) || "U"}
+              </AvatarFallback>
+            </Avatar>
+          </button>
+          <Button variant="outline" size="icon" className="h-10 w-10 shadow-soft" aria-label="Abrir menú" onClick={() => setMenuOpen(true)}>
+            <Menu className="h-5 w-5" />
+          </Button>
         </div>
-        <Button variant="outline" size="icon" className="shadow-soft md:hidden" aria-label="Abrir menú" onClick={() => setMenuOpen(true)}>
-          <Menu className="h-5 w-5" />
-        </Button>
+      </div>
+
+      {/* Encabezado */}
+      <header className="flex items-end justify-between gap-4 md:items-center md:pt-1">
+        <div>
+          <p className="text-[13px] text-muted-foreground first-letter:uppercase">
+            <span className="md:hidden">{greeting()},</span>
+            <span className="hidden md:inline">{today}</span>
+          </p>
+          <h1 className="text-[26px] font-bold leading-tight tracking-[-0.035em] md:text-[28px]">
+            <span className="hidden md:inline">{greeting()}, </span>
+            {firstName || "Hola"}
+          </h1>
+        </div>
         <div className="hidden items-center gap-2 md:flex">
           <Button variant="outline" asChild className="hidden lg:inline-flex">
             <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer">
@@ -239,7 +260,10 @@ const Home = () => {
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent side="left" className="flex flex-col">
           <SheetHeader>
-            <SheetTitle className="text-left text-xl tracking-[-0.025em]">Menú</SheetTitle>
+            <SheetTitle className="flex items-center gap-2 text-left text-xl tracking-[-0.03em]">
+              <FinwatLogo size={26} />
+              Finwat
+            </SheetTitle>
           </SheetHeader>
           <div className="flex-1 space-y-1 py-6">
             <p className="eyebrow px-3 pb-2 text-muted-foreground">Secciones</p>

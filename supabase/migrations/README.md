@@ -37,6 +37,7 @@ proyecto de desarrollo (decidido 2026-11-13). Por eso:
 | `014_investments_rls.sql` | Policies de lectura + `interest_schedules_view` | aplicada 2026-11-15 |
 | `015_vouchers_storage.sql` | Bucket privado `investment-vouchers` + policies | aplicada 2026-11-15 |
 | `016_account_cards.sql` | Columnas opcionales de tarjeta en `accounts` + RPC `set_default_account` (aditiva) | aplicada 2026-11-16 |
+| `017_contribution_return_types.sql` | Aportes con monto fijo o sin interés + `update_contribution` (editar/corregir). Tests: `../tests/017_tests.sql` | **pendiente** |
 
 **Aplicar 010–015:** pegar `../bundles/fase1_aplicar_010-015.sql` en el SQL Editor (una sola transacción).
 **Probar:** pegar `../tests/fase1_tests.sql` (todo con rollback; muestra PASS/FAIL).
