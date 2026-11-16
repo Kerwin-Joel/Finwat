@@ -230,6 +230,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
                   {accounts.map((acc) => (
                     <SelectItem key={acc.id} value={acc.id}>
                       {acc.name}
+                      {acc.last4 ? ` •••• ${acc.last4}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>

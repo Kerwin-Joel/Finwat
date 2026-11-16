@@ -18,7 +18,8 @@ import {
 import useAuthStore from "../stores/authStore";
 import useAccountStore from "../stores/accountStore";
 import useTransactionStore from "../stores/transactionStore";
-import AccountCard from "../components/AccountCard";
+import CardCarousel from "../components/cards/CardCarousel";
+import AccountSheet from "../components/cards/AccountSheet";
 import MonthSpending from "../components/MonthSpending";
 import TransactionList from "../components/TransactionList";
 import AddTransactionModal from "../components/AddTransactionModal";
@@ -99,12 +100,7 @@ const Home = () => {
     fetchTransactions();
   }, []);
 
-  const mainAccount = accounts[0];
-
-  // Calcular siempre desde TODAS las transacciones
-  const totalIncome = transactions.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0);
-  const totalExpenses = transactions.filter((t) => t.type === "expense").reduce((sum, t) => sum + t.amount, 0);
-  const totalBalance = totalIncome - totalExpenses;
+  const [accountSheetOpen, setAccountSheetOpen] = useState(false);
 
   // Filtros locales solo para la lista
   const [localFilters, setLocalFilters] = useState<TransactionFilters>({});
@@ -193,15 +189,10 @@ const Home = () => {
       <div className="grid gap-5 md:gap-7 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start lg:gap-8">
         <div className="space-y-5 md:space-y-6 lg:sticky lg:top-8">
           {/* Balance */}
-          {loadingAccounts || !mainAccount ? (
+          {loadingAccounts && accounts.length === 0 ? (
             <SkeletonAccountCard />
           ) : (
-            <AccountCard
-              account={mainAccount}
-              totalIncome={totalIncome}
-              totalExpenses={totalExpenses}
-              totalBalance={totalBalance}
-            />
+            <CardCarousel accounts={accounts} transactions={transactions} onAdd={() => setAccountSheetOpen(true)} />
           )}
 
           {/* Accesos rápidos */}
@@ -295,6 +286,7 @@ const Home = () => {
       </Sheet>
 
       <AddTransactionModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      {accountSheetOpen && <AccountSheet open onOpenChange={(o) => !o && setAccountSheetOpen(false)} account={null} />}
       <OnboardingModal />
     </div>
   );

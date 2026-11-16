@@ -33,17 +33,44 @@
 //     };
 // };
 import { supabase } from "../lib/supabase";
-import type { Account, CreateAccountRequest } from "../types/account";
+import type { Account, CreateAccountRequest, UpdateAccountRequest } from "../types/account";
+
+/** Mensaje claro si la migración 016 aún no está aplicada */
+const accountError = (error: { message?: string; code?: string }) => {
+  if (/card_network|card_style|card_kind|last4|bank_name|credit_limit|set_default_account/.test(error.message ?? "")) {
+    return new Error("Falta activar las tarjetas personalizables en la base de datos (migración 016).");
+  }
+  return new Error(error.message || "No se pudo guardar la cuenta");
+};
 
 export const getAccounts = async (): Promise<Account[]> => {
   const { data, error } = await supabase
     .from("accounts")
     .select("*")
     .eq("is_active", true)
-    .order("is_default", { ascending: false });
+    .order("is_default", { ascending: false })
+    .order("created_at", { ascending: true });
 
   if (error) throw error;
   return data as Account[];
+};
+
+export const updateAccount = async (id: string, patch: UpdateAccountRequest): Promise<Account> => {
+  const { data, error } = await supabase.from("accounts").update(patch).eq("id", id).select().single();
+  if (error) throw accountError(error);
+  return data as Account;
+};
+
+/** Nada se borra: la cuenta se archiva y deja de mostrarse (sus movimientos se conservan) */
+export const archiveAccount = async (id: string): Promise<void> => {
+  const { error } = await supabase.from("accounts").update({ is_active: false }).eq("id", id);
+  if (error) throw accountError(error);
+};
+
+/** Cambia la cuenta principal (donde el bot de WhatsApp registra) en una sola operación */
+export const setDefaultAccount = async (id: string): Promise<void> => {
+  const { error } = await supabase.rpc("set_default_account", { p_account_id: id });
+  if (error) throw accountError(error);
 };
 
 export const getAccountById = async (
@@ -67,19 +94,30 @@ export const createAccount = async (
   } = await supabase.auth.getUser();
   if (!user) throw new Error("No autenticado");
 
+  const card = {
+    card_network: payload.card_network ?? null,
+    card_kind: payload.card_kind ?? null,
+    last4: payload.last4 ?? null,
+    bank_name: payload.bank_name ?? null,
+    credit_limit: payload.credit_limit ?? null,
+    ...(payload.card_style ? { card_style: payload.card_style } : {}),
+  };
+  const hasCardFields = Object.values(card).some((v) => v !== null && v !== undefined);
+
   const { data, error } = await supabase
     .from("accounts")
     .insert({
       user_id: user.id,
       name: payload.name,
       type: payload.type ?? "cash",
-      currency: payload.currency ?? "USD",
+      currency: payload.currency ?? "PEN",
       balance: payload.initialBalance ?? 0,
       is_default: false,
+      ...(hasCardFields ? card : {}),
     })
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) throw accountError(error);
   return data as Account;
 };

@@ -14,6 +14,7 @@ import ChangePasswordModal from '../components/ChangePasswordModal';
 import ProfilePhotoModal from '../components/ProfilePhotoModal';
 import HelpSupportModal from '../components/HelpSupportModal';
 import CategorySettingsModal from '../components/CategorySettingsModal';
+import AccountsManager from '../components/cards/AccountsManager';
 
 // Preset color palette for custom theme
 const PRESET_COLORS = [
@@ -113,6 +114,8 @@ const Profile = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            <AccountsManager />
 
             <div className="space-y-2">
                 <h3 className="text-sm font-medium text-muted-foreground mb-4">Apariencia</h3>

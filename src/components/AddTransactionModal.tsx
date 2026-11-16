@@ -42,7 +42,9 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<TransactionCategory>("OTROS");
-  const [accountId, setAccountId] = useState(accounts[0]?.id || "");
+  const [pickedAccountId, setAccountId] = useState("");
+  // Si no eligió ninguna (o las cuentas cargaron después de montar), usar la principal
+  const accountId = pickedAccountId || accounts.find((a) => a.is_default)?.id || accounts[0]?.id || "";
   const [date, setDate] = useState<Date>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -193,6 +195,8 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   {accounts.map((acc) => (
                     <SelectItem key={acc.id} value={acc.id}>
                       {acc.name}
+                      {acc.last4 ? ` •••• ${acc.last4}` : ""}
+                      {acc.is_default ? " · principal" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
