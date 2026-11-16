@@ -112,7 +112,7 @@ const Investments = () => {
     <div className="space-y-5 pb-24 pt-2">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Inversiones</h1>
+          <h1 className="text-[26px] font-semibold tracking-[-0.03em] md:text-[28px] md:font-bold md:tracking-[-0.035em]">Inversiones</h1>
           <p className="text-sm text-muted-foreground">Tu capital con gestores</p>
         </div>
         <Button className="h-11 gap-1" onClick={() => setShowNew(true)}>
@@ -129,6 +129,8 @@ const Investments = () => {
         </div>
       )}
 
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start lg:gap-8">
+      <div className="space-y-5 lg:sticky lg:top-8">
       {/* KPIs */}
       {loadingFirst ? (
         <div className="space-y-3" aria-busy="true" aria-label="Cargando resumen">
@@ -159,7 +161,7 @@ const Investments = () => {
                 <Amount
                   value={k.capital_outstanding_cents / 100}
                   currency={cur}
-                  className="mt-1 text-[42px] font-light leading-none tracking-[-0.045em]"
+                  className="mt-1 text-[42px] font-light leading-none tracking-[-0.045em] md:text-[52px]"
                 />
                 <div className="mt-6 grid grid-cols-3 gap-2">
                   {[
@@ -214,10 +216,11 @@ const Investments = () => {
           </ul>
         </section>
       )}
+      </div>
 
       {/* Líneas */}
-      <section aria-labelledby="inv-lines">
-        <h2 id="inv-lines" className="mb-2 text-sm font-semibold">
+      <section aria-labelledby="inv-lines" className="min-w-0">
+        <h2 id="inv-lines" className="mb-3 text-[17px] font-semibold tracking-[-0.02em]">
           Gestores
         </h2>
         {loadingFirst ? (
@@ -238,13 +241,14 @@ const Investments = () => {
             }
           />
         ) : (
-          <motion.ul className="space-y-3" initial="hidden" animate="show" variants={stagger}>
+          <motion.ul className="grid gap-3 md:grid-cols-2 lg:grid-cols-1" initial="hidden" animate="show" variants={stagger}>
             {sorted.map((l) => (
               <LineCard key={l.line_id} line={l} onOpen={() => navigate(`/investments/${l.line_id}`)} />
             ))}
           </motion.ul>
         )}
       </section>
+      </div>
 
       <NewLineSheet open={showNew} onOpenChange={setShowNew} />
     </div>

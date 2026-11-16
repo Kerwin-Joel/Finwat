@@ -38,7 +38,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.6, ease: EASE_OUT }}
       aria-label="Balance de tu cuenta"
-      className="hero-aurora overflow-hidden rounded-[28px] p-5 shadow-float"
+      className="hero-aurora overflow-hidden rounded-[28px] p-5 shadow-float md:p-7"
     >
       {/* Marca de agua del logo */}
       <div className="pointer-events-none absolute -right-12 -top-12 opacity-[0.07]" aria-hidden="true">
@@ -69,7 +69,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
           value={totalBalance}
           currency={account.currency ?? "PEN"}
           hidden={!showBalance}
-          className="mt-1 text-[44px] font-light leading-none tracking-[-0.045em] text-white"
+          className="mt-1 text-[44px] font-light leading-none tracking-[-0.045em] text-white md:text-[54px]"
         />
       </div>
 

@@ -88,6 +88,8 @@ const InvestmentLineDetail = () => {
         <ArrowLeft className="h-4 w-4" /> Inversiones
       </Button>
 
+      <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)] lg:items-start lg:gap-8 lg:space-y-0">
+      <div className="space-y-4 lg:sticky lg:top-8">
       {/* Encabezado */}
       <motion.header
         className="hero-aurora overflow-hidden rounded-[28px] p-5 shadow-float"
@@ -149,8 +151,10 @@ const InvestmentLineDetail = () => {
         </div>
       )}
 
+      </div>
+      <div className="min-w-0 space-y-4">
       {/* Tabs con indicador deslizante */}
-      <div role="tablist" aria-label="Secciones de la línea" className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div role="tablist" aria-label="Secciones de la línea" className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] md:mx-0 md:w-fit md:rounded-full md:border md:border-border/70 md:bg-card md:p-1 md:shadow-soft [&::-webkit-scrollbar]:hidden">
         {TABS.map((t) => {
           const active = tab === t.id;
           return (
@@ -219,6 +223,8 @@ const InvestmentLineDetail = () => {
           />
         )}
       </section>
+      </div>
+      </div>
 
       {isInvestor && (
         <ContributionSheet open={showContribution} onOpenChange={setShowContribution} summary={s} onDone={refresh} />

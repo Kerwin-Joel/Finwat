@@ -19,6 +19,7 @@ import useAuthStore from "../stores/authStore";
 import useAccountStore from "../stores/accountStore";
 import useTransactionStore from "../stores/transactionStore";
 import AccountCard from "../components/AccountCard";
+import MonthSpending from "../components/MonthSpending";
 import TransactionList from "../components/TransactionList";
 import AddTransactionModal from "../components/AddTransactionModal";
 import { SkeletonAccountCard } from "../components/SkeletonLoader";
@@ -47,12 +48,16 @@ const QuickAction = ({
   onClick,
   href,
   custom,
+  mobileOnly,
+  desktopOnly,
 }: {
   icon?: LucideIcon;
   label: string;
   onClick?: () => void;
   href?: string;
   custom?: React.ReactNode;
+  mobileOnly?: boolean;
+  desktopOnly?: boolean;
 }) => {
   const content = (
     <>
@@ -63,9 +68,9 @@ const QuickAction = ({
     </>
   );
   const cls =
-    "surface flex aspect-[1/1.02] w-full flex-col items-start justify-between p-3 transition-transform duration-200 ease-out-expo active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+    "surface flex aspect-[1/1.02] w-full flex-col items-start justify-between p-3 transition-[transform,box-shadow] duration-200 ease-out-expo active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:aspect-auto md:h-[112px] md:p-4 md:hover:-translate-y-0.5 md:hover:shadow-float";
   return (
-    <motion.div variants={riseItem}>
+    <motion.div variants={riseItem} className={mobileOnly ? "md:hidden" : desktopOnly ? "hidden md:block" : undefined}>
       {href ? (
         <a href={href} target="_blank" rel="noopener noreferrer" className={cls} aria-label={label}>
           {content}
@@ -138,71 +143,104 @@ const Home = () => {
 
   const firstName = user?.name?.split(" ")[0] ?? "";
 
+  const today = new Date().toLocaleDateString("es-PE", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "America/Lima",
+  });
+
   return (
-    <div className="relative space-y-5 pb-6">
+    <div className="relative space-y-5 pb-6 md:space-y-7">
       {/* Encabezado */}
-      <header className="flex items-center justify-between pt-1">
+      <header className="flex items-center justify-between gap-4 pt-1">
         <div className="flex items-center gap-3">
-          <Avatar className="h-11 w-11 border border-border/70 shadow-soft">
+          <Avatar className="h-11 w-11 border border-border/70 shadow-soft md:hidden">
             <AvatarImage src={user?.photoUrl} />
             <AvatarFallback className="bg-primary text-[15px] font-semibold text-primary-foreground">
               {user?.name?.charAt(0) || "U"}
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-[12px] text-muted-foreground">{greeting()}</p>
-            <h1 className="text-[17px] font-semibold leading-tight tracking-[-0.02em]">{firstName || "Hola"}</h1>
+            <p className="text-[12px] text-muted-foreground md:text-[13px] md:first-letter:uppercase">
+              <span className="md:hidden">{greeting()}</span>
+              <span className="hidden md:inline">{today}</span>
+            </p>
+            <h1 className="text-[17px] font-semibold leading-tight tracking-[-0.02em] md:text-[28px] md:font-bold md:tracking-[-0.035em]">
+              <span className="hidden md:inline">{greeting()}, </span>
+              {firstName || "Hola"}
+            </h1>
           </div>
         </div>
-        <Button variant="outline" size="icon" className="shadow-soft" aria-label="Abrir menú" onClick={() => setMenuOpen(true)}>
+        <Button variant="outline" size="icon" className="shadow-soft md:hidden" aria-label="Abrir menú" onClick={() => setMenuOpen(true)}>
           <Menu className="h-5 w-5" />
         </Button>
+        <div className="hidden items-center gap-2 md:flex">
+          <Button variant="outline" asChild className="hidden lg:inline-flex">
+            <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer">
+              <span className="[&_svg]:h-4 [&_svg]:w-4">
+                <WhatsAppIcon color="currentColor" />
+              </span>
+              Registrar por WhatsApp
+            </a>
+          </Button>
+          <Button onClick={() => setIsAddModalOpen(true)}>
+            <Plus className="h-4 w-4" /> Nuevo movimiento
+          </Button>
+        </div>
       </header>
 
-      {/* Balance */}
-      {loadingAccounts || !mainAccount ? (
-        <SkeletonAccountCard />
-      ) : (
-        <AccountCard
-          account={mainAccount}
-          totalIncome={totalIncome}
-          totalExpenses={totalExpenses}
-          totalBalance={totalBalance}
-        />
-      )}
+      <div className="grid gap-5 md:gap-7 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <div className="space-y-5 md:space-y-6 lg:sticky lg:top-8">
+          {/* Balance */}
+          {loadingAccounts || !mainAccount ? (
+            <SkeletonAccountCard />
+          ) : (
+            <AccountCard
+              account={mainAccount}
+              totalIncome={totalIncome}
+              totalExpenses={totalExpenses}
+              totalBalance={totalBalance}
+            />
+          )}
 
-      {/* Accesos rápidos */}
-      <motion.nav
-        aria-label="Accesos rápidos"
-        className="grid grid-cols-4 gap-2.5"
-        variants={staggerContainer}
-        initial={reduce ? false : "hidden"}
-        animate="show"
-      >
-        <QuickAction icon={Plus} label="Agregar" onClick={() => setIsAddModalOpen(true)} />
-        <QuickAction label="WhatsApp" href={`https://wa.me/${WHATSAPP_NUMBER}`} custom={<WhatsAppIcon color="currentColor" />} />
-        <QuickAction icon={TrendingUp} label="Invertir" onClick={() => navigate("/investments")} />
-        <QuickAction icon={LayoutGrid} label="Más" onClick={() => setMenuOpen(true)} />
-      </motion.nav>
+          {/* Accesos rápidos */}
+          <motion.nav
+            aria-label="Accesos rápidos"
+            className="grid grid-cols-4 gap-2.5 md:gap-3"
+            variants={staggerContainer}
+            initial={reduce ? false : "hidden"}
+            animate="show"
+          >
+            <QuickAction icon={Plus} label="Agregar" onClick={() => setIsAddModalOpen(true)} />
+            <QuickAction label="WhatsApp" href={`https://wa.me/${WHATSAPP_NUMBER}`} custom={<WhatsAppIcon color="currentColor" />} />
+            <QuickAction icon={TrendingUp} label="Invertir" onClick={() => navigate("/investments")} />
+            <QuickAction icon={Bell} label="Recordar" onClick={() => navigate("/reminders")} desktopOnly />
+            <QuickAction icon={LayoutGrid} label="Más" onClick={() => setMenuOpen(true)} mobileOnly />
+          </motion.nav>
 
-      {/* Movimientos */}
-      <section aria-label="Movimientos recientes">
-        <TransactionList
-          transactions={filteredTransactions}
-          isLoading={loadingTransactions}
-          filters={localFilters}
-          onFilterChange={setLocalFilters}
-          sortOption={localSortOption}
-          onSortChange={setLocalSortOption}
-          onTransactionClick={handleTransactionClick}
-          limit={10}
-        />
-        {transactions.length > 10 && (
-          <Button variant="ghost" className="mt-2 w-full text-muted-foreground" onClick={() => navigate("/transactions")}>
-            Ver todos los movimientos
-          </Button>
-        )}
-      </section>
+          {!loadingTransactions && <MonthSpending transactions={transactions} className="hidden md:block" />}
+        </div>
+
+        {/* Movimientos */}
+        <section aria-label="Movimientos recientes" className="min-w-0">
+          <TransactionList
+            transactions={filteredTransactions}
+            isLoading={loadingTransactions}
+            filters={localFilters}
+            onFilterChange={setLocalFilters}
+            sortOption={localSortOption}
+            onSortChange={setLocalSortOption}
+            onTransactionClick={handleTransactionClick}
+            limit={10}
+          />
+          {transactions.length > 10 && (
+            <Button variant="ghost" className="mt-2 w-full text-muted-foreground" onClick={() => navigate("/transactions")}>
+              Ver todos los movimientos
+            </Button>
+          )}
+        </section>
+      </div>
 
       <EditTransactionModal isOpen={isEditModalOpen} onClose={handleCloseEditModal} transaction={selectedTransaction} />
 
