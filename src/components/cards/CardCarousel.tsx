@@ -3,10 +3,15 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import type { Account } from "@/types/account";
 import type { Transaction } from "@/types/transaction";
 import AccountCard from "@/components/AccountCard";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-// Carrusel de cuentas en el inicio: desliza con el dedo (scroll-snap nativo),
-// puntos indicadores, flechas en escritorio y, al final, "agregar tarjeta".
+// Carrusel de cuentas en el inicio.
+// - Móvil con varias cuentas: la siguiente se asoma por la derecha (se desliza con el dedo).
+// - Tablet/escritorio o una sola cuenta: la tarjeta ocupa todo el ancho.
+// - Controles debajo (nunca encima de la tarjeta): flechas, puntos y "Agregar tarjeta".
+const GAP = 12;
+
 const CardCarousel = ({
   accounts,
   transactions,
@@ -18,8 +23,9 @@ const CardCarousel = ({
 }) => {
   const trackRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
+  const multiple = accounts.length > 1;
 
-  // Ingresos, gastos y saldo de cada cuenta a partir de sus movimientos
+  // Ingresos y gastos de cada cuenta a partir de sus movimientos
   const stats = useMemo(() => {
     const map = new Map<string, { income: number; expense: number }>();
     for (const t of transactions) {
@@ -31,29 +37,33 @@ const CardCarousel = ({
     return map;
   }, [transactions]);
 
-  const slides = accounts.length + 1; // + "agregar"
-  const multiple = accounts.length > 1;
-
   const onScroll = () => {
     const el = trackRef.current;
-    if (!el) return;
-    const slide = el.firstElementChild as HTMLElement | null;
-    const w = slide ? slide.offsetWidth + 12 : el.clientWidth;
-    setActive(Math.min(slides - 1, Math.max(0, Math.round(el.scrollLeft / w))));
+    const first = el?.firstElementChild as HTMLElement | null;
+    if (!el || !first) return;
+    const i = Math.round(el.scrollLeft / (first.offsetWidth + GAP));
+    setActive(Math.min(accounts.length - 1, Math.max(0, i)));
   };
 
   const goTo = (i: number) => {
     const el = trackRef.current;
-    const target = el?.children[i] as HTMLElement | undefined;
-    if (el && target) el.scrollTo({ left: target.offsetLeft - el.offsetLeft - (el.clientWidth - target.offsetWidth) / 2, behavior: "smooth" });
+    const first = el?.firstElementChild as HTMLElement | null;
+    if (!el || !first) return;
+    const next = Math.min(accounts.length - 1, Math.max(0, i));
+    el.scrollTo({ left: next * (first.offsetWidth + GAP), behavior: "smooth" });
   };
 
   return (
-    <div className="relative" role="region" aria-roledescription="carrusel" aria-label="Tus cuentas y tarjetas">
+    <div role="region" aria-roledescription="carrusel" aria-label="Tus cuentas y tarjetas">
+      {/* Pista: padding vertical para que la sombra de la tarjeta no se corte */}
       <div
         ref={trackRef}
         onScroll={onScroll}
-        className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-4 pb-2 [scrollbar-width:none] md:-mx-1 md:px-1 [&::-webkit-scrollbar]:hidden"
+        className={cn(
+          "-mx-4 -my-6 flex snap-x snap-mandatory overflow-x-auto scroll-smooth scroll-px-4 px-4 py-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          "md:-mx-3 md:scroll-px-3 md:px-3",
+        )}
+        style={{ gap: GAP }}
       >
         {accounts.map((a, i) => {
           const s = stats.get(a.id) ?? { income: 0, expense: 0 };
@@ -61,75 +71,73 @@ const CardCarousel = ({
             <div
               key={a.id}
               className={cn(
-                "shrink-0 snap-center transition-[opacity,transform] duration-500 ease-out-expo",
-                multiple ? "w-[90%]" : "w-full",
-                multiple && i !== active && "scale-[0.97] opacity-70",
+                "shrink-0 snap-start transition-[opacity,transform] duration-500 ease-out-expo",
+                multiple ? "w-[88%] md:w-full" : "w-full",
+                multiple && i !== active && "scale-[0.97] opacity-60 md:scale-100 md:opacity-100",
               )}
               aria-roledescription="tarjeta"
-              aria-label={`${i + 1} de ${accounts.length}`}
+              aria-label={`${a.name}, ${i + 1} de ${accounts.length}`}
             >
               <AccountCard account={a} totalIncome={s.income} totalExpenses={s.expense} totalBalance={s.income - s.expense} />
             </div>
           );
         })}
-        <div className={cn("shrink-0 snap-center", multiple || accounts.length === 1 ? "w-[90%]" : "w-full")}>
-          <button
-            type="button"
-            onClick={onAdd}
-            className="flex h-full min-h-[236px] w-full flex-col items-center justify-center gap-3 rounded-[28px] border-2 border-dashed border-border bg-card/50 text-muted-foreground transition-colors duration-200 hover:border-brand/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <Plus className="h-5 w-5" />
-            </span>
-            <span className="text-[14px] font-semibold">Agregar tarjeta o cuenta</span>
-            <span className="text-[12px]">Visa, Mastercard, Amex, débito o crédito</span>
-          </button>
+      </div>
+
+      {/* Controles */}
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-1">
+          {multiple && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden h-9 w-9 md:inline-flex"
+              onClick={() => goTo(active - 1)}
+              disabled={active === 0}
+              aria-label="Tarjeta anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          )}
+          {multiple && (
+            <div className="flex items-center" role="tablist" aria-label="Elegir tarjeta">
+              {accounts.map((a, i) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === active}
+                  aria-label={a.name}
+                  onClick={() => goTo(i)}
+                  className="flex h-8 items-center px-[3px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span
+                    className={cn(
+                      "block h-1.5 rounded-full transition-all duration-300 ease-out-expo",
+                      i === active ? "w-5 bg-primary" : "w-1.5 bg-border",
+                    )}
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+          {multiple && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden h-9 w-9 md:inline-flex"
+              onClick={() => goTo(active + 1)}
+              disabled={active === accounts.length - 1}
+              aria-label="Tarjeta siguiente"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          )}
         </div>
+        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={onAdd}>
+          <Plus className="h-4 w-4" /> Agregar tarjeta
+        </Button>
       </div>
-
-      {/* Indicadores */}
-      <div className="mt-2 flex items-center justify-center gap-1.5" role="tablist" aria-label="Elegir tarjeta">
-        {Array.from({ length: slides }, (_, i) => (
-          <button
-            key={i}
-            type="button"
-            role="tab"
-            aria-selected={i === active}
-            aria-label={i < accounts.length ? accounts[i].name : "Agregar tarjeta"}
-            onClick={() => goTo(i)}
-            className="flex h-6 items-center px-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <span
-              className={cn(
-                "block h-1.5 rounded-full transition-all duration-300 ease-out-expo",
-                i === active ? "w-5 bg-primary" : "w-1.5 bg-border",
-              )}
-            />
-          </button>
-        ))}
-      </div>
-
-      {/* Flechas en tablet/escritorio */}
-      {active > 0 && (
-        <button
-          type="button"
-          onClick={() => goTo(active - 1)}
-          aria-label="Tarjeta anterior"
-          className="absolute left-2 top-[118px] hidden h-10 w-10 items-center justify-center rounded-full bg-card/90 text-foreground shadow-float backdrop-blur md:flex"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-      )}
-      {active < slides - 1 && (
-        <button
-          type="button"
-          onClick={() => goTo(active + 1)}
-          aria-label="Tarjeta siguiente"
-          className="absolute right-2 top-[118px] hidden h-10 w-10 items-center justify-center rounded-full bg-card/90 text-foreground shadow-float backdrop-blur md:flex"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
-      )}
     </div>
   );
 };

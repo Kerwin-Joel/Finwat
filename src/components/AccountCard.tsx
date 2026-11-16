@@ -105,7 +105,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
       </div>
 
       {/* Pie: banco, últimos dígitos y red */}
-      {(account.bank_name || account.last4 || account.card_network || TypeIcon) && (
+      {(account.bank_name || account.last4 || (account.card_network && account.card_network !== "otra")) && (
         <div className="relative mt-5 flex items-center justify-between gap-3 text-[12.5px] text-white/75">
           <span className="flex min-w-0 items-center gap-2">
             {TypeIcon && <TypeIcon className="h-4 w-4 shrink-0" aria-hidden="true" />}
