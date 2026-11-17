@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, SlidersHorizontal } from "lucide-react";
+import { ArrowLeft, Sparkles, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import type {
   Contribution,
   InterestSchedule,
   LineSummary,
+  Payment,
   PaymentKind,
   PaymentMethod,
   PaymentResult,
@@ -20,16 +21,31 @@ import { PAYMENT_METHODS } from "@/types/investment";
 import BottomSheet from "./BottomSheet";
 import { AllocationBars, AmountInput, Chips, Field, VoucherPicker } from "./fields";
 import { SuccessCheck, WarningList } from "./primitives";
+import WaveLoader from "./WaveLoader";
+import { capitalOutstandingByContribution } from "@/utils/investmentCalc";
+import { cn } from "@/lib/utils";
 
 type Method = Exclude<PaymentMethod, "reinversion">;
 type Step = 0 | 1 | 2 | 3; // voucher → datos → imputación → listo
 const STEPS = ["Voucher", "Datos", "Imputación"];
 
-const KIND_OPTIONS: { value: PaymentKind; label: string }[] = [
-  { value: "interes", label: "Intereses" },
+const kindOptions = (commission: "none" | "some" | "all"): { value: PaymentKind; label: string }[] => [
+  { value: "interes", label: commission === "all" ? "Comisión" : commission === "some" ? "Intereses o comisión" : "Intereses" },
   { value: "capital", label: "Devolución de capital" },
-  { value: "mixto", label: "Ambos" },
+  { value: "mixto", label: commission === "all" ? "Comisión + capital" : "Ambos" },
 ];
+
+// Mínimo que se muestra el loader de imputación (para que no parpadee)
+const MIN_LOADER_MS = 1100;
+
+interface Suggestion {
+  key: string;
+  title: string;
+  detail: string;
+  cents: number;
+  kind: PaymentKind;
+  manual: Record<string, string> | null;
+}
 
 const PaymentSheet = ({
   open,
@@ -37,6 +53,7 @@ const PaymentSheet = ({
   summary,
   schedules,
   contributions,
+  payments = [],
   initialKind = "interes",
   onDone,
 }: {
@@ -45,6 +62,7 @@ const PaymentSheet = ({
   summary: LineSummary;
   schedules: InterestSchedule[];
   contributions: Contribution[];
+  payments?: Payment[];
   initialKind?: PaymentKind;
   onDone: () => void;
 }) => {
@@ -87,6 +105,93 @@ const PaymentSheet = ({
         .sort((a, b) => a.due_date.localeCompare(b.due_date)),
     [schedules],
   );
+  // Préstamos con comisión
+  const commissionIds = useMemo(
+    () => new Set(contributions.filter((c) => c.return_type === "comision").map((c) => c.id)),
+    [contributions],
+  );
+  const activeAll = contributions.filter((c) => c.status === "activo");
+  const commissionMode: "none" | "some" | "all" =
+    activeAll.length > 0 && activeAll.every((c) => c.return_type === "comision")
+      ? "all"
+      : activeAll.some((c) => c.return_type === "comision")
+        ? "some"
+        : "none";
+
+  // Montos sugeridos: lo vencido y, por cada préstamo con comisión, "solo comisión" o "comisión + capital"
+  const suggestions = useMemo<Suggestion[]>(() => {
+    const out: Suggestion[] = [];
+    const capitalOut = capitalOutstandingByContribution(contributions, payments);
+    const loans = contributions
+      .filter((c) => c.status === "activo" && c.return_type === "comision" && c.repayment_date)
+      .sort((a, b) => (a.repayment_date ?? "").localeCompare(b.repayment_date ?? ""));
+    for (const c of loans.slice(0, 2)) {
+      const sc = pendingSchedules.find((x) => x.contribution_id === c.id);
+      const cap = capitalOut.get(c.id) ?? 0;
+      const when = formatDay(c.repayment_date ?? "", "d MMM");
+      if (sc) {
+        out.push({
+          key: `com-${c.id}`,
+          title: "Solo comisión",
+          detail: `Préstamo de ${formatCents(c.amount_cents, summary.currency)} · ${when}`,
+          cents: sc.outstanding_cents,
+          kind: "interes",
+          manual: { [`s:${sc.id}`]: (sc.outstanding_cents / 100).toFixed(2) },
+        });
+      }
+      if (cap > 0) {
+        const manualVals: Record<string, string> = { [`c:${c.id}`]: (cap / 100).toFixed(2) };
+        if (sc) manualVals[`s:${sc.id}`] = (sc.outstanding_cents / 100).toFixed(2);
+        out.push({
+          key: `all-${c.id}`,
+          title: sc ? "Comisión + capital" : "Devuelve el capital",
+          detail: `Préstamo de ${formatCents(c.amount_cents, summary.currency)} · ${when}`,
+          cents: cap + (sc?.outstanding_cents ?? 0),
+          kind: sc ? "mixto" : "capital",
+          manual: manualVals,
+        });
+      }
+    }
+    const overdue = pendingSchedules
+      .filter((x) => x.due_date <= summary.today && !commissionIds.has(x.contribution_id))
+      .reduce((a, x) => a + x.outstanding_cents, 0);
+    if (overdue > 0) {
+      out.unshift({
+        key: "overdue",
+        title: "Lo vencido",
+        detail: "Cuotas de interés a la fecha",
+        cents: overdue,
+        kind: "interes",
+        manual: null,
+      });
+    }
+    return out;
+  }, [contributions, payments, pendingSchedules, commissionIds, summary.currency, summary.today]);
+
+  const [picked, setPicked] = useState<string | null>(null);
+  const pickSuggestion = (sg: Suggestion) => {
+    setPicked(sg.key);
+    setAmount((sg.cents / 100).toFixed(2));
+    setKind(sg.kind);
+    setManual(!!sg.manual);
+    setManualValues(sg.manual ?? {});
+  };
+  // Si cambias monto o tipo a mano, la imputación vuelve a ser automática
+  const resetPicked = () => {
+    if (!picked) return;
+    setPicked(null);
+    setManual(false);
+    setManualValues({});
+  };
+  const changeAmount = (v: string) => {
+    setAmount(v);
+    resetPicked();
+  };
+  const changeKind = (k: PaymentKind) => {
+    setKind(k);
+    resetPicked();
+  };
+
   const activeContributions = useMemo(
     () => contributions.filter((c) => c.status === "activo" && c.contributed_at <= date),
     [contributions, date],
@@ -122,11 +227,14 @@ const PaymentSheet = ({
   const runPreview = async () => {
     setLoadingPreview(true);
     setPreviewError(null);
+    const started = Date.now();
+    const settle = () => new Promise((r) => setTimeout(r, Math.max(0, MIN_LOADER_MS - (Date.now() - started))));
     try {
       const r = await investmentService.registerPayment(
         { ...baseInput, allocations: manual ? manualAllocations.items : null },
         true,
       );
+      await settle();
       setPreview(r);
       if (!manual) {
         // Prellenar el modo manual con la propuesta automática
@@ -138,6 +246,7 @@ const PaymentSheet = ({
         setManualValues(vals);
       }
     } catch (err) {
+      await settle();
       setPreview(null);
       setPreviewError((err as Error).message);
     } finally {
@@ -161,6 +270,7 @@ const PaymentSheet = ({
       setNotes("");
       setManual(false);
       setManualValues({});
+      setPicked(null);
       setPreview(null);
       setPreviewError(null);
       const n = limaNow();
@@ -200,6 +310,7 @@ const PaymentSheet = ({
   };
 
   const title = step === 3 ? "Pago registrado" : kind === "capital" ? "Devolución de capital" : "Registrar pago";
+  const isCommissionSchedule = (sc: InterestSchedule) => commissionIds.has(sc.contribution_id);
 
   const footer =
     step === 3 ? (
@@ -267,11 +378,39 @@ const PaymentSheet = ({
 
           {step === 1 && (
             <div className="space-y-4">
+              {suggestions.length > 0 && (
+                <div className="space-y-2">
+                  <p className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground">
+                    <Sparkles className="h-3.5 w-3.5 text-brand" aria-hidden="true" /> Montos sugeridos
+                  </p>
+                  <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {suggestions.map((sg) => {
+                      const active = picked === sg.key;
+                      return (
+                        <button
+                          key={sg.key}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => pickSuggestion(sg)}
+                          className={cn(
+                            "min-h-11 shrink-0 rounded-2xl border px-3.5 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            active ? "border-brand bg-brand/10" : "border-border/70 bg-card hover:bg-secondary",
+                          )}
+                        >
+                          <span className="block text-[12px] text-muted-foreground">{sg.title}</span>
+                          <span className="num block text-[15px] font-semibold tracking-[-0.02em]">{formatCents(sg.cents, summary.currency)}</span>
+                          <span className="block text-[11px] text-muted-foreground">{sg.detail}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               <Field id="p-kind" label="¿Qué está pagando?">
-                <Chips label="Tipo de pago" value={kind} onChange={setKind} options={KIND_OPTIONS} />
+                <Chips label="Tipo de pago" value={kind} onChange={changeKind} options={kindOptions(commissionMode)} />
               </Field>
               <Field id="p-amount" label="Monto" error={dataErrors.amount}>
-                <AmountInput id="p-amount" value={amount} onChange={setAmount} currency={summary.currency} autoFocus invalid={!!dataErrors.amount} />
+                <AmountInput id="p-amount" value={amount} onChange={changeAmount} currency={summary.currency} autoFocus invalid={!!dataErrors.amount} />
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field id="p-date" label="Fecha" error={dataErrors.date}>
@@ -324,7 +463,7 @@ const PaymentSheet = ({
                     pendingSchedules.map((s) => (
                       <div key={s.id} className="flex items-center gap-3">
                         <label htmlFor={`m-s-${s.id}`} className="flex-1 text-xs">
-                          Cuota {formatDay(s.due_date, "d MMM")} · P{s.period_number}
+                          {isCommissionSchedule(s) ? `Comisión · vence ${formatDay(s.due_date, "d MMM")}` : `Cuota ${formatDay(s.due_date, "d MMM")} · P${s.period_number}`}
                           <span className="block text-muted-foreground">debe {formatCents(s.outstanding_cents, summary.currency)}</span>
                         </label>
                         <Input
@@ -340,7 +479,7 @@ const PaymentSheet = ({
                     activeContributions.map((c) => (
                       <div key={c.id} className="flex items-center gap-3">
                         <label htmlFor={`m-c-${c.id}`} className="flex-1 text-xs">
-                          Capital del aporte {formatDay(c.contributed_at, "d MMM yyyy")}
+                          {c.return_type === "comision" ? "Capital del préstamo" : "Capital del aporte"} {formatDay(c.contributed_at, "d MMM yyyy")}
                           <span className="block text-muted-foreground">aporte de {formatCents(c.amount_cents, summary.currency)}</span>
                         </label>
                         <Input
@@ -367,12 +506,30 @@ const PaymentSheet = ({
                 </div>
               ) : null}
 
-              {loadingPreview && <div className="h-24 animate-pulse rounded-xl bg-muted" aria-label="Calculando imputación" />}
+              {loadingPreview && (
+                <WaveLoader
+                  label="Calculando la imputación"
+                  steps={
+                    kind === "capital"
+                      ? ["Revisando el capital vigente", "Ordenando los aportes", "Repartiendo la devolución"]
+                      : [
+                          commissionMode === "all" ? "Buscando comisiones pendientes" : "Buscando cuotas pendientes",
+                          "Aplicando de la más antigua a la más nueva",
+                          kind === "mixto" ? "Repartiendo el capital" : "Revisando saldo a favor",
+                        ]
+                  }
+                />
+              )}
               {!loadingPreview && preview && (
-                <div className="space-y-3 surface p-4">
+                <motion.div
+                  className="space-y-3 surface p-4"
+                  initial={reduce ? { opacity: 0 } : { opacity: 0, y: 10, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                >
                   <p className="text-xs font-medium text-muted-foreground">Así se reparte</p>
-                  <AllocationBars allocations={preview.allocations} currency={summary.currency} />
-                </div>
+                  <AllocationBars allocations={preview.allocations} currency={summary.currency} commissionIds={commissionIds} />
+                </motion.div>
               )}
               {preview && <WarningList warnings={preview.warnings} />}
               {previewError && (
@@ -389,7 +546,7 @@ const PaymentSheet = ({
                 title={`${formatCents(cents ?? 0, summary.currency)} registrados`}
                 subtitle={summary.manager_linked ? "Queda pendiente de confirmación" : undefined}
               />
-              <AllocationBars allocations={preview.allocations} currency={summary.currency} />
+              <AllocationBars allocations={preview.allocations} currency={summary.currency} commissionIds={commissionIds} />
             </div>
           )}
         </motion.div>

@@ -10,13 +10,14 @@ export type PaymentKind = "interes" | "capital" | "mixto";
 export type ReconStatus = "pendiente_contraparte" | "confirmado" | "observado" | "anulado";
 export type ScheduleStatus = "programada" | "parcial" | "pagada" | "condonada" | "anulada";
 export type ScheduleDisplayStatus = ScheduleStatus | "por_vencer" | "vencida";
-/** Cómo rinde un aporte: % mensual, monto fijo mensual o sin interés */
-export type ReturnType = "tasa" | "monto_fijo" | "sin_interes";
+/** Cómo rinde un aporte: % mensual, monto fijo mensual, sin interés o préstamo al 0 % con comisión */
+export type ReturnType = "tasa" | "monto_fijo" | "sin_interes" | "comision";
 
 export const RETURN_TYPE_OPTIONS: { value: ReturnType; label: string }[] = [
   { value: "tasa", label: "% mensual" },
   { value: "monto_fijo", label: "Monto fijo" },
   { value: "sin_interes", label: "Sin interés" },
+  { value: "comision", label: "Comisión" },
 ];
 
 export interface InvestmentWarning {
@@ -88,6 +89,8 @@ export interface Contribution {
   grace_months: number;
   return_type: ReturnType;
   fixed_amount_cents: number | null;
+  /** Préstamo con comisión: fecha en que vencen la comisión y el capital */
+  repayment_date: string | null;
   method: PaymentMethod;
   source_bank: string | null;
   operation_code: string | null;
@@ -185,6 +188,8 @@ export interface PaymentResult {
 export interface ContributionPreview {
   return_type?: ReturnType;
   monthly_interest_cents: number;
+  commission_cents?: number | null;
+  repayment_date?: string | null;
   monthly_rate: number;
   anchor_day: number;
   first_period_start: string;
@@ -222,6 +227,7 @@ export interface ContributionInput {
   grace_months?: number;
   return_type?: ReturnType;
   fixed_amount_cents?: number | null;
+  repayment_date?: string | null;
   method: Exclude<PaymentMethod, "reinversion">;
   source_bank?: string | null;
   operation_code?: string | null;

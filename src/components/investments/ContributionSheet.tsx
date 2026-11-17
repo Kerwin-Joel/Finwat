@@ -7,6 +7,14 @@ import { useToast } from "@/hooks/use-toast";
 import { investmentService } from "@/api/investmentService";
 import { formatCents, formatRate, parseAmountToCents, parsePercentToRate } from "@/utils/money";
 import { formatDay } from "@/utils/investmentDates";
+
+/** Misma fecha un mes después (para proponer la fecha de pago de un préstamo) */
+const plusOneMonth = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  const next = new Date(Date.UTC(y, m, Math.min(d, last)));
+  return next.toISOString().slice(0, 10);
+};
 import type { Contribution, ContributionResult, LineSummary, PaymentMethod, ReturnType } from "@/types/investment";
 import { PAYMENT_METHODS, RETURN_TYPE_OPTIONS } from "@/types/investment";
 import BottomSheet from "./BottomSheet";
@@ -38,6 +46,7 @@ const ContributionSheet = ({
     String(Math.round(Number(contribution && contribution.return_type === "tasa" ? contribution.monthly_rate : summary.default_monthly_rate) * 10000) / 100),
   );
   const [fixed, setFixed] = useState(contribution?.fixed_amount_cents ? (contribution.fixed_amount_cents / 100).toFixed(2) : "");
+  const [repayDate, setRepayDate] = useState(contribution?.repayment_date ?? plusOneMonth(contribution?.contributed_at ?? summary.today));
   const [method, setMethod] = useState<Method>((contribution?.method as Method) ?? "transferencia");
   const [operation, setOperation] = useState(contribution?.operation_code ?? "");
   const [bank, setBank] = useState(contribution?.source_bank ?? "");
@@ -61,7 +70,13 @@ const ContributionSheet = ({
     amount: amount && (!cents || cents <= 0) ? "Monto no válido" : null,
     date: date > summary.today ? "La fecha no puede ser futura" : null,
     rate: returnType === "tasa" && rateValue === null ? "Tasa entre 0 y 100" : null,
-    fixed: returnType === "monto_fijo" && (!fixedCents || fixedCents <= 0) ? "Indica el monto mensual" : null,
+    fixed:
+      returnType === "monto_fijo" && (!fixedCents || fixedCents <= 0)
+        ? "Indica el monto mensual"
+        : returnType === "comision" && (!fixedCents || fixedCents <= 0)
+          ? "Indica la comisión"
+          : null,
+    repay: returnType === "comision" && (!repayDate || repayDate <= date) ? "Debe ser después de la fecha del préstamo" : null,
     grace: !Number.isInteger(graceValue) || graceValue < 0 || graceValue > 24 ? "Entre 0 y 24 meses" : null,
     anchor: anchorValue !== null && (!Number.isInteger(anchorValue) || anchorValue < 1 || anchorValue > 31) ? "Entre 1 y 31" : null,
   };
@@ -73,9 +88,10 @@ const ContributionSheet = ({
     contributed_at: date,
     return_type: returnType,
     monthly_rate: returnType === "tasa" ? rateValue : null,
-    fixed_amount_cents: returnType === "monto_fijo" ? fixedCents : null,
-    anchor_day: anchorValue,
-    grace_months: graceValue,
+    fixed_amount_cents: returnType === "monto_fijo" || returnType === "comision" ? fixedCents : null,
+    repayment_date: returnType === "comision" ? repayDate : null,
+    anchor_day: returnType === "comision" ? null : anchorValue,
+    grace_months: returnType === "comision" ? 0 : graceValue,
     method,
     source_bank: bank.trim() || null,
     operation_code: operation.trim() || null,
@@ -90,9 +106,10 @@ const ContributionSheet = ({
       date !== contribution.contributed_at ||
       returnType !== contribution.return_type ||
       (returnType === "tasa" && rateValue !== Number(contribution.monthly_rate)) ||
-      (returnType === "monto_fijo" && fixedCents !== Number(contribution.fixed_amount_cents)) ||
-      (anchorValue ?? Number(date.slice(8, 10))) !== contribution.anchor_day ||
-      graceValue !== contribution.grace_months);
+      ((returnType === "monto_fijo" || returnType === "comision") && fixedCents !== Number(contribution.fixed_amount_cents)) ||
+      (returnType === "comision"
+        ? repayDate !== contribution.repayment_date
+        : (anchorValue ?? Number(date.slice(8, 10))) !== contribution.anchor_day || graceValue !== contribution.grace_months));
 
   // Previsualización con dry_run (debounce): rendimiento mensual, primer vencimiento y cupo
   useEffect(() => {
@@ -117,7 +134,7 @@ const ContributionSheet = ({
       clearTimeout(t);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, ready, cents, date, returnType, rateValue, fixedCents, graceValue, anchorValue, method, operation]);
+  }, [open, ready, cents, date, returnType, rateValue, fixedCents, repayDate, graceValue, anchorValue, method, operation]);
 
   const close = (o: boolean) => {
     onOpenChange(o);
@@ -172,7 +189,9 @@ const ContributionSheet = ({
   const p = preview?.preview;
   const committed = summary.committed_cents;
   const monthlyLabel = (pv: NonNullable<typeof p>) =>
-    pv.return_type === "sin_interes"
+    pv.return_type === "comision"
+      ? `Comisión de ${formatCents(pv.commission_cents ?? 0, summary.currency)}`
+      : pv.return_type === "sin_interes"
       ? "Sin interés: solo se controla el capital"
       : pv.return_type === "monto_fijo"
         ? `Pago fijo de ${formatCents(pv.monthly_interest_cents, summary.currency)} al mes`
@@ -207,7 +226,15 @@ const ContributionSheet = ({
       {done ? (
         <SuccessCheck
           title={`${formatCents(cents ?? 0, summary.currency)} entregados`}
-          subtitle={p ? (p.first_due_date ? `${monthlyLabel(p)} · primera cuota el ${formatDay(p.first_due_date)}` : monthlyLabel(p)) : undefined}
+          subtitle={
+            p
+              ? p.return_type === "comision" && p.first_due_date
+                ? `${monthlyLabel(p)} + capital el ${formatDay(p.first_due_date)}`
+                : p.first_due_date
+                  ? `${monthlyLabel(p)} · primera cuota el ${formatDay(p.first_due_date)}`
+                  : monthlyLabel(p)
+              : undefined
+          }
         />
       ) : (
         <div className="space-y-4">
@@ -228,7 +255,9 @@ const ContributionSheet = ({
                 ? "Un porcentaje del capital cada mes"
                 : returnType === "monto_fijo"
                   ? "Una cantidad fija cada mes, sin importar el capital"
-                  : "No paga interés; solo te devuelve el capital"
+                  : returnType === "comision"
+                    ? "Préstamo al 0 %: en la fecha de pago te paga una comisión y te devuelve el capital"
+                    : "No paga interés; solo te devuelve el capital"
             }
           >
             <Chips label="Tipo de rendimiento" value={returnType} onChange={setReturnType} options={RETURN_TYPE_OPTIONS} />
@@ -242,6 +271,17 @@ const ContributionSheet = ({
             <Field id="c-fixed" label="Monto fijo mensual" error={inputErrors.fixed}>
               <AmountInput id="c-fixed" value={fixed} onChange={setFixed} currency={summary.currency} invalid={!!inputErrors.fixed} />
             </Field>
+          )}
+
+          {returnType === "comision" && (
+            <div className="grid grid-cols-2 gap-3">
+              <Field id="c-commission" label="Comisión" error={inputErrors.fixed}>
+                <AmountInput id="c-commission" value={fixed} onChange={setFixed} currency={summary.currency} invalid={!!inputErrors.fixed} />
+              </Field>
+              <Field id="c-repay" label="Fecha de pago" error={inputErrors.repay}>
+                <Input id="c-repay" type="date" className="h-11" value={repayDate} min={date} onChange={(e) => setRepayDate(e.target.value)} />
+              </Field>
+            </div>
           )}
 
           <Field id="c-method" label="Cómo se lo diste">
@@ -265,7 +305,7 @@ const ContributionSheet = ({
             </Field>
           )}
 
-          {returnType !== "sin_interes" && (
+          {returnType !== "sin_interes" && returnType !== "comision" && (
             <>
               <button
                 type="button"
@@ -325,7 +365,13 @@ const ContributionSheet = ({
                 />
                 <div className="space-y-1 text-sm">
                   <p className="font-medium">{monthlyLabel(p)}</p>
-                  {p.first_due_date && (
+                  {p.first_due_date && p.return_type === "comision" && (
+                    <p className="text-muted-foreground">
+                      El {formatDay(p.first_due_date)} te paga {formatCents((p.commission_cents ?? 0) + (cents ?? 0), summary.currency)}:
+                      comisión + capital
+                    </p>
+                  )}
+                  {p.first_due_date && p.return_type !== "comision" && (
                     <p className="text-muted-foreground">
                       Primera cuota el {formatDay(p.first_due_date)} · luego cada día {p.anchor_day}
                     </p>

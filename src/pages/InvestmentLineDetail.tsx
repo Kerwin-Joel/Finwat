@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowDownLeft, ArrowLeft, Plus, Receipt, RefreshCcw } from "lucide-react";
@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import useInvestmentStore from "@/stores/investmentStore";
-import { formatCents, formatRate } from "@/utils/money";
+import { formatCents } from "@/utils/money";
 import { formatDay } from "@/utils/investmentDates";
+import { collectedThisMonth, overdueCommissionCapital } from "@/utils/investmentCalc";
 import type { Contribution, Payment, PaymentKind } from "@/types/investment";
 import { CountUp } from "@/components/investments/primitives";
 import { Amount } from "@/components/ui/amount";
@@ -58,6 +59,12 @@ const InvestmentLineDetail = () => {
 
   const refresh = () => refreshAfterWrite(lineId);
 
+  const month = useMemo(
+    () => (detail ? collectedThisMonth(detail.payments, detail.summary.today) : null),
+    [detail],
+  );
+  const overdueCapital = useMemo(() => (detail ? overdueCommissionCapital(detail) : []), [detail]);
+
   if (!detail) {
     return (
       <div className="space-y-4 pb-24 pt-2">
@@ -85,6 +92,8 @@ const InvestmentLineDetail = () => {
   const s = detail.summary;
   const isInvestor = s.role === "investor";
   const closed = s.status === "cerrada";
+  const activeCount = detail.contributions.filter((c) => c.status === "activo").length;
+  const monthName = formatDay(s.today, "MMMM");
 
   return (
     <div className="space-y-4 pb-28 pt-2">
@@ -105,7 +114,7 @@ const InvestmentLineDetail = () => {
           <div>
             <h1 className="text-[22px] font-semibold tracking-[-0.03em]">{s.manager_display_name}</h1>
             <p className="mt-0.5 text-[12px] text-white/65">
-              {formatRate(s.default_monthly_rate)} mensual · {s.interest_on_return_mode === "periodo_completo" ? "mes completo" : "prorrateo diario"}
+              {activeCount === 1 ? "1 aporte activo" : `${activeCount} aportes activos`}
               {loading ? " · actualizando…" : ""}
             </p>
           </div>
@@ -119,7 +128,47 @@ const InvestmentLineDetail = () => {
           currency={s.currency}
           className="mt-0.5 text-[38px] font-light leading-none tracking-[-0.045em]"
         />
-        <div className="mt-5 grid grid-cols-2 gap-2">
+        {/* Lo que te va pagando este mes */}
+        {month && (
+          <div className="glass-on-hero mt-5 rounded-2xl px-3.5 py-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="text-[11px] text-white/65">Cobrado en {monthName}</p>
+              {month.count > 0 && (
+                <p className="text-[11px] text-white/55">{month.count === 1 ? "1 pago" : `${month.count} pagos`}</p>
+              )}
+            </div>
+            <CountUp cents={month.total} currency={s.currency} className="mt-0.5 block text-[22px] font-medium tracking-[-0.03em] text-white" />
+            {month.total > 0 ? (
+              <p className="mt-0.5 text-[11.5px] text-white/70 num">
+                {[
+                  month.income > 0 && `Intereses y comisiones ${formatCents(month.income, s.currency)}`,
+                  month.capital > 0 && `Capital ${formatCents(month.capital, s.currency)}`,
+                  month.credit > 0 && `A favor ${formatCents(month.credit, s.currency)}`,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            ) : (
+              <p className="mt-0.5 text-[11.5px] text-white/60">Aún no te paga nada este mes</p>
+            )}
+            {s.monthly_interest_expected_cents > 0 && (
+              <div className="mt-2.5">
+                <div className="h-1.5 overflow-hidden rounded-full bg-white/15" aria-hidden="true">
+                  <motion.div
+                    className="h-full rounded-full bg-emerald-300"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(100, (s.month_collected_cents / s.monthly_interest_expected_cents) * 100)}%` }}
+                    transition={{ duration: reduce ? 0 : 0.9, ease: EASE_OUT, delay: 0.2 }}
+                  />
+                </div>
+                <p className="mt-1 text-[11px] text-white/60 num">
+                  {formatCents(s.month_collected_cents, s.currency)} de {formatCents(s.monthly_interest_expected_cents, s.currency)} que vencen este mes
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+        <div className="mt-2 grid grid-cols-2 gap-2">
           <div className="glass-on-hero rounded-2xl px-3.5 py-2.5">
             <p className="text-[11px] text-white/65">Por cobrar</p>
             <CountUp cents={s.pending_total_cents} currency={s.currency} className={cn("mt-0.5 block text-[14px] font-medium", s.overdue_cents > 0 ? "text-orange-200" : "text-white")} />
@@ -137,6 +186,20 @@ const InvestmentLineDetail = () => {
           </p>
         )}
       </motion.header>
+
+      {overdueCapital.length > 0 && (
+        <div className="rounded-2xl border border-orange-500/40 bg-orange-500/10 p-4 text-[13px] text-orange-700 dark:text-orange-200" role="alert">
+          <p className="font-semibold">Capital por devolver vencido</p>
+          <ul className="mt-1 space-y-0.5">
+            {overdueCapital.map(({ contribution: c, cents }) => (
+              <li key={c.id} className="num">
+                {formatCents(cents, s.currency)} del préstamo del {formatDay(c.contributed_at, "d MMM")} · debía pagarlo el{" "}
+                {formatDay(c.repayment_date ?? "", "d MMM")}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Acciones */}
       {!closed && (
@@ -252,6 +315,7 @@ const InvestmentLineDetail = () => {
         summary={s}
         schedules={detail.schedules}
         contributions={detail.contributions}
+        payments={detail.payments}
         initialKind={paymentKind ?? "interes"}
         onDone={refresh}
       />

@@ -253,7 +253,9 @@ const describeAudit = (e: AuditEntry, currency: string): AuditView | null => {
     const amount = formatCents(num(n.amount_cents || o.amount_cents), currency);
     if (e.action === "INSERT") {
       const kind =
-        n.return_type === "sin_interes"
+        n.return_type === "comision"
+          ? `comisión de ${formatCents(num(n.fixed_amount_cents), currency)} al ${formatDay(str(n.repayment_date))}`
+          : n.return_type === "sin_interes"
           ? "sin interés"
           : n.return_type === "monto_fijo"
             ? `${formatCents(num(n.fixed_amount_cents), currency)} fijo al mes`

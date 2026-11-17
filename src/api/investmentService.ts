@@ -135,6 +135,8 @@ export const investmentService = {
       p_dry_run: dryRun,
       p_return_type: input.return_type ?? "tasa",
       p_fixed_amount_cents: input.fixed_amount_cents ?? null,
+      // Solo se envía en préstamos con comisión (así funciona aunque 018 aún no esté aplicada)
+      ...(input.return_type === "comision" ? { p_repayment_date: input.repayment_date ?? null } : {}),
     }),
 
   /** Edita un aporte: datos no financieros en el lugar; si cambia monto/fecha/rendimiento, lo corrige */
@@ -153,6 +155,8 @@ export const investmentService = {
       p_operation_code: input.operation_code ?? null,
       p_notes: input.notes ?? null,
       p_reason: reason ?? null,
+      // Solo se envía en préstamos con comisión (así funciona aunque 018 aún no esté aplicada)
+      ...(input.return_type === "comision" ? { p_repayment_date: input.repayment_date ?? null } : {}),
     }),
 
   registerPayment: (input: PaymentInput, dryRun: boolean) =>

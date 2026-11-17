@@ -213,9 +213,12 @@ export const VoucherPicker = ({
 export const AllocationBars = ({
   allocations,
   currency,
+  commissionIds,
 }: {
   allocations: PlannedAllocation[];
   currency: string;
+  /** Aportes que son préstamos con comisión (para nombrar bien sus cuotas) */
+  commissionIds?: Set<string>;
 }) => {
   const reduce = useReducedMotion();
   return (
@@ -228,8 +231,13 @@ export const AllocationBars = ({
               ? a.capital_before_cents ?? a.amount_cents
               : a.amount_cents;
         const pct = total > 0 ? Math.min(1, a.amount_cents / total) : 1;
+        const isCommission = !!a.contribution_id && !!commissionIds?.has(a.contribution_id);
         const title =
-          a.target_type === "schedule"
+          a.target_type === "schedule" && isCommission
+            ? `Comisión · vence el ${a.due_date ? formatDay(a.due_date, "d MMM") : ""}`
+            : a.target_type === "capital" && isCommission
+              ? `Capital del préstamo del ${a.contributed_at ? formatDay(a.contributed_at, "d MMM yyyy") : ""}`
+              : a.target_type === "schedule"
             ? `Cuota del ${a.due_date ? formatDay(a.due_date, "d MMM") : ""} (periodo ${a.period_number})`
             : a.target_type === "capital"
               ? `Devolución de capital · aporte del ${a.contributed_at ? formatDay(a.contributed_at, "d MMM yyyy") : ""}`

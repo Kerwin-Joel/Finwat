@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { investmentService } from "@/api/investmentService";
 import { centsToAmount, formatCents, formatRate, parseAmountToCents } from "@/utils/money";
+import { capitalOutstandingByContribution } from "@/utils/investmentCalc";
 import { formatDay, relativeDay } from "@/utils/investmentDates";
 import type { Contribution, InterestSchedule, LineDetail, Payment, ReturnMode } from "@/types/investment";
 import { METHOD_LABEL } from "@/types/investment";
@@ -142,10 +143,11 @@ export const ContributionsTab = ({
   onChangeRate: (c: Contribution) => void;
   onVoid: (c: Contribution) => void;
 }) => {
-  const { contributions, schedules, summary: s } = detail;
+  const { contributions, schedules, payments, summary: s } = detail;
   const reduce = useReducedMotion();
   const [open, setOpen] = useState<string | null>(null);
   const isInvestor = s.role === "investor";
+  const capitalOut = useMemo(() => capitalOutstandingByContribution(contributions, payments), [contributions, payments]);
 
   // Orden por próximo vencimiento: primero los que vencen antes; luego los sin cuotas
   // pendientes (sin interés o liquidados) del más reciente al más antiguo; anulados al final.
@@ -155,6 +157,13 @@ export const ContributionsTab = ({
       if ((sc.status === "programada" || sc.status === "parcial") && sc.outstanding_cents > 0) {
         const cur = nextDue.get(sc.contribution_id);
         if (!cur || sc.due_date < cur) nextDue.set(sc.contribution_id, sc.due_date);
+      }
+    }
+    // Préstamo con comisión: el capital también vence en la fecha de pago
+    for (const c of contributions) {
+      if (c.status === "activo" && c.return_type === "comision" && c.repayment_date && (capitalOut.get(c.id) ?? 0) > 0) {
+        const cur = nextDue.get(c.id);
+        if (!cur || c.repayment_date < cur) nextDue.set(c.id, c.repayment_date);
       }
     }
     const rank = (c: Contribution) => (c.status === "anulado" ? 2 : nextDue.has(c.id) ? 0 : 1);
@@ -168,10 +177,12 @@ export const ContributionsTab = ({
         if (a.next && b.next) return a.next.localeCompare(b.next);
         return b.c.contributed_at.localeCompare(a.c.contributed_at);
       });
-  }, [contributions, schedules]);
+  }, [contributions, schedules, capitalOut]);
 
   const returnLabel = (c: Contribution) =>
-    c.return_type === "sin_interes"
+    c.return_type === "comision"
+      ? `Comisión ${formatCents(Number(c.fixed_amount_cents), s.currency)}`
+      : c.return_type === "sin_interes"
       ? "Sin interés"
       : c.return_type === "monto_fijo"
         ? `${formatCents(Number(c.fixed_amount_cents), s.currency)} fijo al mes`
@@ -225,8 +236,19 @@ export const ContributionsTab = ({
                     {c.grace_months > 0 ? ` · ${c.grace_months} mes(es) de gracia` : ""}
                   </p>
                   {next && !anulado && (
-                    <p className="mt-0.5 text-[11.5px] font-medium text-foreground/80">
-                      Próximo vencimiento: {formatDay(next, "d MMM")} · {relativeDay(next, s.today)}
+                    <p
+                      className={cn(
+                        "mt-0.5 text-[11.5px] font-medium",
+                        next < s.today ? "text-orange-500 dark:text-orange-300" : "text-foreground/80",
+                      )}
+                    >
+                      {c.return_type === "comision" ? "Fecha de pago" : "Próximo vencimiento"}: {formatDay(next, "d MMM")} ·{" "}
+                      {relativeDay(next, s.today)}
+                    </p>
+                  )}
+                  {c.return_type === "comision" && c.status === "activo" && (capitalOut.get(c.id) ?? 0) > 0 && (
+                    <p className="mt-0.5 text-[11.5px] text-muted-foreground tabular-nums">
+                      Capital por devolver {formatCents(capitalOut.get(c.id) ?? 0, s.currency)}
                     </p>
                   )}
                 </div>
@@ -257,7 +279,12 @@ export const ContributionsTab = ({
                       {own.length > 0 && (
                         <ul className="space-y-2">
                           {own.map((sc) => (
-                            <ScheduleRow key={sc.id} sc={sc} currency={s.currency} />
+                            <ScheduleRow
+                              key={sc.id}
+                              sc={sc}
+                              currency={s.currency}
+                              label={c.return_type === "comision" ? "Comisión" : undefined}
+                            />
                           ))}
                         </ul>
                       )}
@@ -292,11 +319,11 @@ export const ContributionsTab = ({
   );
 };
 
-const ScheduleRow = ({ sc, currency }: { sc: InterestSchedule; currency: string }) => (
+const ScheduleRow = ({ sc, currency, label }: { sc: InterestSchedule; currency: string; label?: string }) => (
   <li className="flex items-center justify-between gap-2 text-xs">
     <div>
       <p>
-        P{sc.period_number} · {formatDay(sc.due_date)}
+        {label ?? `P${sc.period_number}`} · {formatDay(sc.due_date)}
       </p>
       <p className="text-muted-foreground tabular-nums">
         {formatCents(sc.amount_due_cents, currency)}
