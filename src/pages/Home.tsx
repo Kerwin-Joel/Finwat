@@ -63,7 +63,7 @@ const QuickAction = ({
 }) => {
   const content = (
     <>
-      <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary text-primary-foreground [&_svg]:h-4 [&_svg]:w-4">
+      <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary text-primary-foreground dark:bg-brand-soft dark:text-brand [&_svg]:h-4 [&_svg]:w-4">
         {custom ?? (Icon && <Icon className="h-4 w-4" strokeWidth={2.2} />)}
       </span>
       <span className="eyebrow text-foreground/80">{label}</span>
@@ -278,7 +278,7 @@ const Home = () => {
                 onClick={() => go(item.path)}
                 className="flex h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-[15px] transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary text-primary-foreground">
+                <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary text-primary-foreground dark:bg-brand-soft dark:text-brand">
                   <item.icon className="h-4 w-4" />
                 </span>
                 {item.label}

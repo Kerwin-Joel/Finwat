@@ -72,7 +72,7 @@ const InvestmentLineDetail = () => {
           <ArrowLeft className="h-4 w-4" /> Inversiones
         </Button>
         {error ? (
-          <div className="space-y-3 rounded-xl border border-orange-500/40 bg-orange-500/10 p-4 text-sm text-orange-300" role="alert">
+          <div className="space-y-3 rounded-xl border border-orange-500/40 bg-orange-500/10 p-4 text-sm text-orange-700 dark:text-orange-300" role="alert">
             <p>{error}</p>
             <Button variant="outline" className="h-11 gap-1" onClick={() => fetchLine(lineId)}>
               <RefreshCcw className="h-4 w-4" /> Reintentar
@@ -241,7 +241,7 @@ const InvestmentLineDetail = () => {
               {active && (
                 <motion.span
                   layoutId="inv-tab-indicator"
-                  className="absolute inset-0 rounded-full bg-primary"
+                  className="absolute inset-0 rounded-full bg-primary dark:bg-white/[0.12]"
                   transition={reduce ? { duration: 0 } : SPRING_SNAPPY}
                 />
               )}

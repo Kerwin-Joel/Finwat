@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import useAuthStore from "./stores/authStore";
-import useThemeStore from "./stores/themeStore";
+import useThemeStore, { useResolvedTheme } from "./stores/themeStore";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
 import Home from "./pages/Home";
@@ -25,7 +25,7 @@ import InvestmentLineDetail from "./pages/InvestmentLineDetail";
 
 function App() {
   const initAuth = useAuthStore((state) => state.initAuth);
-  const theme = useThemeStore((state) => state.theme);
+  const theme = useResolvedTheme();
   const customColors = useThemeStore((state) => state.customColors);
 
   // Initialize auth on mount

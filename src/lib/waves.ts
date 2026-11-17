@@ -2,7 +2,13 @@
 // "distortion waves": un frente curvo con borde iridiscente que respira, estela suave y
 // partículas que saltan del origen. Lo usan WaveLoader, ConfirmButton y celebrate().
 
-export const WAVE_PALETTE = ["#ffc915", "#7ec4ff", "#b428e6", "#eb64a0", "#ffb07a", "#9aa0ff", "#7fd9ee"];
+// Paleta de marca: el degradado del isotipo (#00aaff → #0066ff → #003899) con celestes e
+// índigo para el brillo iridiscente, sin salir de la familia azul de Finwat.
+export const WAVE_PALETTE = ["#00aaff", "#0066ff", "#7cc4ff", "#3d5afe", "#00d4ff", "#a8ccff", "#2f80ff"];
+
+// Variante luminosa para dibujar SOBRE botones de color (marino, azul o rojo): mismos tonos
+// de marca pero claros, para que la onda se distinga del fondo del botón.
+export const WAVE_PALETTE_LIGHT = ["#ffffff", "#a8ccff", "#7fe3ff", "#d6e6ff", "#00d4ff", "#9ec2ff", "#eaf2ff"];
 
 export const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3.2);
 export const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -21,13 +27,14 @@ export const rimGradient = (
   y1: number,
   t: number,
   alpha: number,
+  palette: string[] = WAVE_PALETTE,
 ) => {
   const g = ctx.createLinearGradient(x0, y0, x1, y1);
   const shift = (t * 0.18) % 1;
   const a = hexAlpha(alpha);
-  WAVE_PALETTE.forEach((c, i) => g.addColorStop((i / WAVE_PALETTE.length + shift) % 1, c + a));
-  g.addColorStop(0, WAVE_PALETTE[0] + a);
-  g.addColorStop(1, WAVE_PALETTE[0] + a);
+  palette.forEach((c, i) => g.addColorStop((i / palette.length + shift) % 1, c + a));
+  g.addColorStop(0, palette[0] + a);
+  g.addColorStop(1, palette[0] + a);
   return g;
 };
 
@@ -99,12 +106,17 @@ export interface WaveParticle {
 }
 
 /** Partículas en abanico alrededor de `direction` (radianes) con apertura `spread` */
-export const makeParticles = (count: number, direction = -Math.PI / 2, spread = 1.9): WaveParticle[] =>
+export const makeParticles = (
+  count: number,
+  direction = -Math.PI / 2,
+  spread = 1.9,
+  palette: string[] = WAVE_PALETTE,
+): WaveParticle[] =>
   Array.from({ length: count }, (_, i) => ({
     angle: direction + (Math.random() - 0.5) * spread,
     speed: 0.35 + Math.random() * 0.65,
     size: 0.8 + Math.random() * 1.6,
-    color: WAVE_PALETTE[i % WAVE_PALETTE.length],
+    color: palette[i % palette.length],
     twinkle: 4 + Math.random() * 6,
     sway: (Math.random() - 0.5) * 18,
     delay: Math.random() * 0.25,

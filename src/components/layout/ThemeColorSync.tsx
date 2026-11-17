@@ -1,16 +1,16 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import useThemeStore from "@/stores/themeStore";
+import useThemeStore, { useResolvedTheme } from "@/stores/themeStore";
 
 // Colorea la barra del navegador móvil (<meta name="theme-color">) para que combine:
 // en las pantallas con aurora usa su marino superior; dentro de la app, el fondo del tema.
 const AURORA_TOP = "#050a1c";
 const AURORA_ROUTES = ["/login", "/register", "/splash"];
-const THEME_BG = { light: "#f3f5fa", dark: "#070b17" } as const;
+const THEME_BG = { light: "#f3f5fa", dark: "#0e1118" } as const;
 
 const ThemeColorSync = () => {
   const { pathname } = useLocation();
-  const theme = useThemeStore((s) => s.theme);
+  const theme = useResolvedTheme();
   const customBg = useThemeStore((s) => s.customColors.background);
 
   useEffect(() => {

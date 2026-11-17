@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from "framer-motion"
 import { Button, type ButtonProps } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { registerConfirmSource } from "@/lib/celebrate"
-import { easeInOutCubic, fitCanvas, makeParticles, rimGradient, strokeRim, traceFront } from "@/lib/waves"
+import { WAVE_PALETTE_LIGHT, easeInOutCubic, fitCanvas, makeParticles, rimGradient, strokeRim, traceFront } from "@/lib/waves"
 
 // Botón para guardar o confirmar operaciones. Mientras `loading`, una onda iridiscente
 // cruza el botón (sin bajar su opacidad) y el texto pasa a `loadingText`; ignora más toques.
@@ -26,7 +26,7 @@ const ButtonWave = () => {
     })
     ro.observe(canvas)
 
-    let particles = makeParticles(14, 0, 1.4)
+    let particles = makeParticles(14, 0, 1.4, WAVE_PALETTE_LIGHT)
     let lastCycle = -1
     const start = performance.now()
     let raf = 0
@@ -38,7 +38,7 @@ const ButtonWave = () => {
       const p = (t % SWEEP) / SWEEP
       if (cycle !== lastCycle) {
         lastCycle = cycle
-        particles = makeParticles(14, 0, 1.4)
+        particles = makeParticles(14, 0, 1.4, WAVE_PALETTE_LIGHT)
       }
       ctx.clearRect(0, 0, w, h)
 
@@ -49,7 +49,7 @@ const ButtonWave = () => {
       // Estela: lo que ya cruzó la onda queda iluminado
       const wake = ctx.createLinearGradient(0, 0, x, 0)
       wake.addColorStop(0, "rgba(126,196,255,0)")
-      wake.addColorStop(1, `rgba(126,196,255,${0.28 * fade})`)
+      wake.addColorStop(1, `rgba(214,230,255,${0.3 * fade})`)
       ctx.fillStyle = wake
       traceFront(ctx, "horizontal", x, h, amp, t)
       ctx.lineTo(0, h)
@@ -60,7 +60,7 @@ const ButtonWave = () => {
       strokeRim(
         ctx,
         (shift) => traceFront(ctx, "horizontal", x - shift, h, amp, t),
-        (a) => rimGradient(ctx, 0, 0, 0, h, t, a),
+        (a) => rimGradient(ctx, 0, 0, 0, h, t, a, WAVE_PALETTE_LIGHT),
         fade,
         Math.max(0.35, h / 64),
         0.8,
@@ -145,6 +145,7 @@ const ConfirmButton = React.forwardRef<HTMLButtonElement, ConfirmButtonProps>(
           <motion.span
             className="col-start-1 row-start-1 inline-flex items-center gap-2"
             aria-hidden={loading || undefined}
+            initial={false}
             animate={{ opacity: loading ? 0 : 1, y: loading && !reduce ? -6 : 0 }}
             transition={{ duration: 0.2 }}
           >

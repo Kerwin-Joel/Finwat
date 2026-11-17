@@ -1,10 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { easeInOutCubic, easeOutCubic, fitCanvas, makeParticles, rimGradient, strokeRim, traceFront } from "@/lib/waves";
+import FinwatLogo from "@/assets/FinwatLogo";
+import {
+  easeInOutCubic,
+  easeOutCubic,
+  fitCanvas,
+  makeParticles,
+  rimGradient,
+  strokeRim,
+  traceFront,
+} from "@/lib/waves";
 
-// Loader con ondas (motor en lib/waves): un frente iridiscente sube desde abajo, deja una
-// estela de luz y suelta partículas desde el origen. Con movimiento reducido queda quieto.
+// Loader de marca (motor en lib/waves): un frente azul Finwat sube desde abajo, deja una
+// estela de luz y suelta partículas. El texto va sobre un chip de vidrio con el isotipo para
+// que siempre se lea (contraste AA aunque la onda pase detrás). Anuncia el estado a lectores
+// de pantalla (role=status, aria-busy) y con movimiento reducido queda quieto.
 
 const CYCLE = 2.3; // s por pasada
 const PARTICLES = 46;
@@ -26,7 +37,10 @@ const WaveLoader = ({
 
   useEffect(() => {
     if (steps.length < 2) return;
-    const id = setInterval(() => setStepIndex((i) => (i + 1) % steps.length), 1100);
+    const id = setInterval(
+      () => setStepIndex((i) => (i + 1) % steps.length),
+      1100,
+    );
     return () => clearInterval(id);
   }, [steps.length]);
 
@@ -50,13 +64,15 @@ const WaveLoader = ({
       const { width, height: h } = size;
       ctx.clearRect(0, 0, width, h);
       const amp = Math.min(46, h * 0.3);
-      const y = h + amp * 0.2 - easeInOutCubic(Math.min(1, p / 0.9)) * (h + amp * 1.6);
-      const fade = p < 0.06 ? p / 0.06 : p > 0.88 ? Math.max(0, (1 - p) / 0.12) : 1;
+      const y =
+        h + amp * 0.2 - easeInOutCubic(Math.min(1, p / 0.9)) * (h + amp * 1.6);
+      const fade =
+        p < 0.06 ? p / 0.06 : p > 0.88 ? Math.max(0, (1 - p) / 0.12) : 1;
 
       // Estela: lo que ya cruzó la onda queda teñido suavemente
       const wake = ctx.createLinearGradient(0, y, 0, h);
-      wake.addColorStop(0, `rgba(90,190,255,${0.24 * fade})`);
-      wake.addColorStop(1, "rgba(90,190,255,0)");
+      wake.addColorStop(0, `rgba(0,122,255,${0.16 * fade})`);
+      wake.addColorStop(1, "rgba(0,122,255,0)");
       ctx.fillStyle = wake;
       traceFront(ctx, "vertical", y, width, amp, t);
       ctx.lineTo(width, h);
@@ -76,9 +92,15 @@ const WaveLoader = ({
         const life = (p - pt.delay) / 0.75;
         if (life <= 0 || life >= 1) continue;
         const dist = easeOutCubic(life) * pt.speed * h * 1.15;
-        const px = width / 2 + Math.cos(pt.angle) * dist * (width / h) * 0.55 + Math.sin(life * 6 + pt.sway) * pt.sway * 0.4;
+        const px =
+          width / 2 +
+          Math.cos(pt.angle) * dist * (width / h) * 0.55 +
+          Math.sin(life * 6 + pt.sway) * pt.sway * 0.4;
         const py = h + 6 + Math.sin(pt.angle) * dist;
-        ctx.globalAlpha = (1 - life) * (0.55 + 0.45 * Math.sin(t * pt.twinkle + pt.sway)) * fade;
+        ctx.globalAlpha =
+          (1 - life) *
+          (0.55 + 0.45 * Math.sin(t * pt.twinkle + pt.sway)) *
+          fade;
         ctx.fillStyle = pt.color;
         ctx.beginPath();
         ctx.arc(px, py, pt.size, 0, Math.PI * 2);
@@ -98,7 +120,8 @@ const WaveLoader = ({
       raf = requestAnimationFrame(loop);
     };
 
-    if (reduce) frame(0.6, 0.45); // un brillo quieto a media altura
+    if (reduce)
+      frame(0.6, 0.45); // un brillo quieto a media altura
     else raf = requestAnimationFrame(loop);
     return () => {
       cancelAnimationFrame(raf);
@@ -112,28 +135,47 @@ const WaveLoader = ({
     <div
       role="status"
       aria-live="polite"
+      aria-busy="true"
       aria-label={label}
-      className={cn("relative overflow-hidden rounded-2xl border border-border/60 bg-card", className)}
+      className={cn("surface relative overflow-hidden", className)}
       style={{ height }}
     >
-      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />
-      <div className="relative flex h-full flex-col items-center justify-center gap-1 px-4 text-center">
-        <p className="shimmer-text text-[14px] font-semibold tracking-[-0.01em]">{label}</p>
-        <div className="h-4 overflow-hidden">
-          <AnimatePresence mode="wait" initial={false}>
-            {current && (
-              <motion.p
-                key={current}
-                className="text-[12px] text-muted-foreground"
-                initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
-                transition={{ duration: 0.25 }}
-              >
-                {current}
-              </motion.p>
-            )}
-          </AnimatePresence>
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 h-full w-full"
+        aria-hidden="true"
+      />
+      <div className="relative flex h-full items-center justify-center px-4">
+        <div className="flex max-w-full items-center gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-2.5 shadow-soft backdrop-blur-md">
+          <motion.span
+            className="shrink-0"
+            aria-hidden="true"
+            animate={reduce ? undefined : { scale: [1, 1.08, 1] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <FinwatLogo size={24} />
+          </motion.span>
+          <div className="min-w-0 text-left">
+            <p className="shimmer-text truncate text-[14px] font-semibold tracking-[-0.01em]">
+              {label}
+            </p>
+            <div className="h-4 overflow-hidden">
+              <AnimatePresence mode="wait" initial={false}>
+                {current && (
+                  <motion.p
+                    key={current}
+                    className="truncate text-[12px] text-muted-foreground"
+                    initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    {current}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </div>
     </div>
