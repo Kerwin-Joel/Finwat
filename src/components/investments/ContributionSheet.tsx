@@ -20,6 +20,8 @@ import { PAYMENT_METHODS, RETURN_TYPE_OPTIONS } from "@/types/investment";
 import BottomSheet from "./BottomSheet";
 import { AmountInput, Chips, Field, VoucherPicker } from "./fields";
 import { ProgressRing, SuccessCheck, WarningList } from "./primitives";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 type Method = Exclude<PaymentMethod, "reinversion">;
 
@@ -157,6 +159,7 @@ const ContributionSheet = ({
     try {
       if (editing && contribution) {
         const r = await investmentService.updateContribution(contribution.id, input, reason.trim() || undefined);
+        celebrate();
         toast({
           title: r.corrected ? "Aporte corregido" : "Aporte actualizado",
           description: r.corrected ? "El anterior quedó anulado en el historial y sus cuotas se recalcularon." : undefined,
@@ -176,6 +179,7 @@ const ContributionSheet = ({
         { ...input, voucher_path: voucherPath, voucher_hash: voucherHash },
         false,
       );
+      celebrate();
       setPreview(r);
       setDone(true);
       onDone();
@@ -209,17 +213,15 @@ const ContributionSheet = ({
             Listo
           </Button>
         ) : (
-          <Button className="h-11 w-full" onClick={submit} disabled={!ready || saving}>
-            {saving
-              ? "Guardando…"
-              : editing
-                ? financialChange
-                  ? "Corregir aporte"
-                  : "Guardar cambios"
-                : cents
-                  ? `Registrar ${formatCents(cents, summary.currency)}`
-                  : "Registrar aporte"}
-          </Button>
+          <ConfirmButton className="h-11 w-full" onClick={submit} disabled={!ready} loading={saving} loadingText="Guardando…">
+            {editing
+              ? financialChange
+                ? "Corregir aporte"
+                : "Guardar cambios"
+              : cents
+                ? `Registrar ${formatCents(cents, summary.currency)}`
+                : "Registrar aporte"}
+          </ConfirmButton>
         )
       }
     >

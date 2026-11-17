@@ -14,6 +14,8 @@ import type {
   InterestPeriod,
   InterestType,
 } from "../types/loan";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 interface AddLoanModalProps {
   isOpen: boolean;
@@ -153,6 +155,7 @@ const AddLoanModal: React.FC<AddLoanModalProps> = ({
               }
             : undefined,
       });
+      celebrate();
       onCreated(loan);
       reset();
       toast({ title: "💰 Préstamo registrado" });
@@ -575,9 +578,9 @@ const AddLoanModal: React.FC<AddLoanModalProps> = ({
               Siguiente
             </Button>
           ) : (
-            <Button className="flex-1" onClick={handleSubmit} disabled={saving}>
-              {saving ? "Guardando..." : "💰 Registrar Préstamo"}
-            </Button>
+            <ConfirmButton className="flex-1" onClick={handleSubmit} loading={saving} loadingText="Guardando…">
+              💰 Registrar Préstamo
+            </ConfirmButton>
           )}
         </div>
       </DialogContent>

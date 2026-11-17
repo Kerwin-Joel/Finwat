@@ -38,7 +38,7 @@ proyecto de desarrollo (decidido 2026-11-13). Por eso:
 | `015_vouchers_storage.sql` | Bucket privado `investment-vouchers` + policies | aplicada 2026-11-15 |
 | `016_account_cards.sql` | Columnas opcionales de tarjeta en `accounts` + RPC `set_default_account` (aditiva) | aplicada 2026-11-16 |
 | `017_contribution_return_types.sql` | Aportes con monto fijo o sin interés + `update_contribution` (editar/corregir). Tests: `../tests/017_tests.sql` | aplicada 2026-11-16 |
-| `018_commission_loans.sql` | Préstamos al 0 % con comisión (`return_type = comision`, `repayment_date`): una sola cuota por la comisión en la fecha de pago. Tests: `../tests/018_tests.sql` | **pendiente** (pegar en SQL Editor) |
+| `018_commission_loans.sql` | Préstamos al 0 % con comisión (`return_type = comision`, `repayment_date`): una sola cuota por la comisión en la fecha de pago. Tests: `../tests/018_tests.sql` | aplicada 2026-11-17 |
 
 **Aplicar 010–015:** pegar `../bundles/fase1_aplicar_010-015.sql` en el SQL Editor (una sola transacción).
 **Probar:** pegar `../tests/fase1_tests.sql` (todo con rollback; muestra PASS/FAIL).

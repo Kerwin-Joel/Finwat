@@ -17,6 +17,8 @@ import type { Contribution, InterestSchedule, LineDetail, Payment, ReturnMode } 
 import { METHOD_LABEL } from "@/types/investment";
 import { AmountInput, Chips, Field } from "./fields";
 import { CountUp, EmptyState, ProgressRing, ReconBadge, ScheduleBadge, Stat } from "./primitives";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 const stagger = { show: { transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } };
@@ -647,6 +649,7 @@ export const SettingsTab = ({
         due_soon_days: Math.max(0, Math.min(31, Number(dueSoon) || 0)),
         payment_grace_days: Math.max(0, Math.min(31, Number(grace) || 0)),
       });
+      celebrate();
       toast({ title: "Ajustes guardados" });
       onSaved();
     } catch (err) {
@@ -704,9 +707,9 @@ export const SettingsTab = ({
             <Input id="s-grace" className="h-11" inputMode="numeric" value={grace} onChange={(e) => setGrace(e.target.value)} />
           </Field>
         </div>
-        <Button className="h-11 w-full" onClick={save} disabled={saving}>
-          {saving ? "Guardando…" : "Guardar ajustes"}
-        </Button>
+        <ConfirmButton className="h-11 w-full" onClick={save} loading={saving} loadingText="Guardando…">
+          Guardar ajustes
+        </ConfirmButton>
       </div>
 
       <div className="space-y-2 rounded-xl border border-border/60 p-4">

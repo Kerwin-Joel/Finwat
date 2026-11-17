@@ -10,6 +10,8 @@ import {
 } from './ui/dialog';
 import { useToast } from '../hooks/use-toast';
 import useAuthStore from '../stores/authStore';
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 interface ProfilePhotoModalProps {
     isOpen: boolean;
@@ -67,6 +69,7 @@ const ProfilePhotoModal: React.FC<ProfilePhotoModalProps> = ({ isOpen, onClose }
 
         try {
             await updateProfilePhoto(previewUrl);
+            celebrate();
             toast({
                 title: 'Foto actualizada',
                 description: 'Tu foto de perfil se ha actualizado correctamente.',
@@ -165,9 +168,9 @@ const ProfilePhotoModal: React.FC<ProfilePhotoModalProps> = ({ isOpen, onClose }
                     <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
                         Cancelar
                     </Button>
-                    <Button onClick={handleSave} disabled={isLoading || !previewUrl}>
-                        {isLoading ? 'Guardando...' : 'Guardar Foto'}
-                    </Button>
+                    <ConfirmButton onClick={handleSave} disabled={!previewUrl} loading={isLoading} loadingText="Guardando…">
+                        Guardar Foto
+                    </ConfirmButton>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

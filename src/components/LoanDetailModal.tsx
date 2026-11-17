@@ -20,6 +20,8 @@ import {
   LOAN_STATUS_CONFIG,
   INTEREST_PERIOD_LABEL,
 } from "../types/loan";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 interface LoanDetailModalProps {
   isOpen: boolean;
@@ -107,6 +109,7 @@ const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
       });
       const updated = await loanService.getById(loan.id);
       onUpdated(updated);
+      celebrate();
       setIsEditing(false);
       toast({ title: "✅ Préstamo actualizado" });
     } catch {
@@ -132,6 +135,7 @@ const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
       const updated = await loanService.getById(loan.id);
       onUpdated(updated);
       await loadPaymentsAndHistory();
+      celebrate();
       setShowAddPayment(false);
       setPaymentAmount("");
       setPaymentNotes("");
@@ -417,14 +421,15 @@ const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
                       >
                         Cancelar
                       </Button>
-                      <Button
+                      <ConfirmButton
                         size="sm"
                         className="flex-1"
                         onClick={handleAddPayment}
-                        disabled={savingPayment}
+                        loading={savingPayment}
+                        loadingText="Guardando…"
                       >
-                        {savingPayment ? "Guardando..." : "Guardar"}
-                      </Button>
+                        Guardar
+                      </ConfirmButton>
                     </div>
                   </div>
                 )}
@@ -622,13 +627,14 @@ const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
               >
                 Cancelar
               </Button>
-              <Button
+              <ConfirmButton
                 className="flex-1"
                 onClick={handleSaveEdit}
-                disabled={saving}
+                loading={saving}
+                loadingText="Guardando…"
               >
-                {saving ? "Guardando..." : "✅ Guardar cambios"}
-              </Button>
+                ✅ Guardar cambios
+              </ConfirmButton>
             </div>
           </div>
         )}

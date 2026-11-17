@@ -12,6 +12,8 @@ import { parseAmountToCents } from "@/utils/money";
 import type { Account, AccountType, CardKind, CardNetworkId, CardStyle } from "@/types/account";
 import { CARD_STYLES, toNumber } from "@/types/account";
 import { CARD_STYLE_CLASS } from "./cardStyle";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 const TYPE_OPTIONS: { value: AccountType; label: string }[] = [
   { value: "card", label: "Tarjeta" },
@@ -107,6 +109,7 @@ const AccountSheet = ({
         await addAccount(draft, principal);
         toast({ title: `${draft.name} agregada` });
       }
+      celebrate();
       onOpenChange(false);
     } catch (err) {
       toast({ title: "No se pudo guardar", description: (err as Error).message, variant: "destructive" });
@@ -149,9 +152,9 @@ const AccountSheet = ({
       title={editing ? "Editar cuenta" : "Nueva cuenta"}
       description={editing ? undefined : "Tarjetas, cuentas bancarias, billeteras o efectivo."}
       footer={
-        <Button size="lg" className="w-full" onClick={save} disabled={saving}>
-          {saving ? "Guardando…" : editing ? "Guardar cambios" : "Crear cuenta"}
-        </Button>
+        <ConfirmButton size="lg" className="w-full" onClick={save} loading={saving} loadingText="Guardando…">
+          {editing ? "Guardar cambios" : "Crear cuenta"}
+        </ConfirmButton>
       }
     >
       <div className="space-y-5">

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Loader2, Eye, EyeOff, CheckCircle } from "lucide-react";
-import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import {
@@ -17,6 +16,8 @@ import { useToast } from "../hooks/use-toast";
 import { supabase } from "../lib/supabase";
 import FinwatLogo from "../assets/FinwatLogo";
 import { getAuthErrorMessage } from "../lib/authErrors";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -94,6 +95,7 @@ const ResetPassword = () => {
       if (error) throw error;
       // Cierra la sesión de recuperación para que inicie sesión con la nueva clave
       await supabase.auth.signOut();
+      celebrate();
       setDone(true);
       setTimeout(() => navigate("/login"), 3000);
     } catch (error) {
@@ -210,13 +212,9 @@ const ResetPassword = () => {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    "Actualizar contraseña"
-                  )}
-                </Button>
+                <ConfirmButton type="submit" className="w-full" loading={isLoading} loadingText="Actualizando…">
+                  Actualizar contraseña
+                </ConfirmButton>
               </CardFooter>
             </form>
           )}

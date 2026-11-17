@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +9,8 @@ import type { Contribution, InterestSchedule, LineSummary } from "@/types/invest
 import { ShieldCheck } from "lucide-react";
 import BottomSheet from "./BottomSheet";
 import { Field } from "./fields";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 // ------------------------------------------------------------------ Cambio de tasa
 /** Por aporte (desde un periodo) o para toda la línea (desde una fecha). Nunca toca cuotas pagadas. */
@@ -79,6 +80,7 @@ export const RateChangeSheet = ({
       } else {
         await investmentService.changeLineRate(summary.line_id, rateValue, effective, why);
       }
+      celebrate();
       toast({ title: `Tasa cambiada a ${formatRate(rateValue)}` });
       onOpenChange(false);
       setRate("");
@@ -102,9 +104,9 @@ export const RateChangeSheet = ({
           : `Todos los aportes con tasa de ${summary.manager_display_name} · hoy ${formatRate(currentRate)}`
       }
       footer={
-        <Button className="h-11 w-full" onClick={submit} disabled={saving}>
-          {saving ? "Guardando…" : rateValue !== null && !errors.rate ? `Cambiar a ${formatRate(rateValue)}` : "Cambiar tasa"}
-        </Button>
+        <ConfirmButton className="h-11 w-full" onClick={submit} loading={saving} loadingText="Guardando…">
+          {rateValue !== null && !errors.rate ? `Cambiar a ${formatRate(rateValue)}` : "Cambiar tasa"}
+        </ConfirmButton>
       }
     >
       <div className="space-y-4">
@@ -187,9 +189,9 @@ export const VoidSheet = ({
       title={isPayment ? "Eliminar pago" : "Eliminar aporte"}
       description={target?.label}
       footer={
-        <Button variant="destructive" className="h-11 w-full" onClick={submit} disabled={saving}>
-          {saving ? "Eliminando…" : "Eliminar"}
-        </Button>
+        <ConfirmButton variant="destructive" className="h-11 w-full" onClick={submit} loading={saving} loadingText="Eliminando…">
+          Eliminar
+        </ConfirmButton>
       }
     >
       <div className="space-y-4">

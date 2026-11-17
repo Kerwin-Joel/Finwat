@@ -13,6 +13,8 @@ import { isValidPhoneNumber } from "react-phone-number-input";
 import AuthShell from "@/components/layout/AuthShell";
 import { getAuthErrorMessage } from "@/lib/authErrors";
 import { resendConfirmation } from "@/api/authService";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -61,6 +63,7 @@ const Register = () => {
         setPendingEmail(email.trim());
         return;
       }
+      celebrate();
       toast({
         title: "¡Cuenta creada!",
         description: "Bienvenido a FinWat.",
@@ -215,9 +218,9 @@ const Register = () => {
               )}
             </AnimatePresence>
 
-            <Button type="submit" size="lg" className="mt-2 w-full" disabled={isLoading}>
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-label="Creando cuenta" /> : "Crear cuenta"}
-            </Button>
+            <ConfirmButton type="submit" size="lg" className="mt-2 w-full" loading={isLoading} loadingText="Creando tu cuenta…">
+              Crear cuenta
+            </ConfirmButton>
             <p className="pt-2 text-center text-[13.5px] text-muted-foreground">
               ¿Ya tienes cuenta?{" "}
               <Link to="/login?ingresar" className="font-semibold text-foreground hover:underline">

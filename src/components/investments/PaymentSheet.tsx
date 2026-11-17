@@ -24,6 +24,8 @@ import { SuccessCheck, WarningList } from "./primitives";
 import WaveLoader from "./WaveLoader";
 import { capitalOutstandingByContribution } from "@/utils/investmentCalc";
 import { cn } from "@/lib/utils";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 type Method = Exclude<PaymentMethod, "reinversion">;
 type Step = 0 | 1 | 2 | 3; // voucher → datos → imputación → listo
@@ -299,6 +301,7 @@ const PaymentSheet = ({
         },
         false,
       );
+      celebrate();
       setPreview(r);
       setStep(3);
       onDone();
@@ -335,13 +338,15 @@ const PaymentSheet = ({
           </Button>
         )}
         {step === 2 && (
-          <Button
+          <ConfirmButton
             className="h-11 flex-1"
-            disabled={!preview || saving || loadingPreview || (manual && kind === "capital" && manualAllocations.rest !== 0)}
+            disabled={!preview || loadingPreview || (manual && kind === "capital" && manualAllocations.rest !== 0)}
+            loading={saving}
+            loadingText="Registrando…"
             onClick={confirm}
           >
-            {saving ? "Registrando…" : `Confirmar ${formatCents(cents ?? 0, summary.currency)}`}
-          </Button>
+            {`Confirmar ${formatCents(cents ?? 0, summary.currency)}`}
+          </ConfirmButton>
         )}
       </div>
     );

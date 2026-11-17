@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import useAuthStore from "../stores/authStore";
 import { Button } from "../components/ui/button";
 import { useToast } from "../hooks/use-toast";
@@ -11,6 +11,8 @@ import { AuthInput, FieldBox } from "@/components/auth/AuthField";
 import { getAuthErrorMessage, isEmailNotConfirmed } from "@/lib/authErrors";
 import { resendConfirmation } from "@/api/authService";
 import { EASE_OUT } from "@/lib/motion";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 const Login = () => {
   const [params] = useSearchParams();
@@ -36,6 +38,7 @@ const Login = () => {
 
     try {
       await login({ email: email.trim(), password });
+      celebrate();
       navigate("/splash");
     } catch (error) {
       setNeedsConfirmation(isEmailNotConfirmed(error));
@@ -144,9 +147,9 @@ const Login = () => {
         )}
       </AnimatePresence>
 
-      <Button type="submit" size="lg" className="mt-2 w-full" disabled={isLoading}>
-        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-label="Ingresando" /> : "Ingresar"}
-      </Button>
+      <ConfirmButton type="submit" size="lg" className="mt-2 w-full" loading={isLoading} loadingText="Ingresando…">
+        Ingresar
+      </ConfirmButton>
       <p className="pt-2 text-center text-[13.5px] text-muted-foreground">
         ¿No tienes cuenta?{" "}
         <Link to="/register" className="font-semibold text-foreground hover:underline">

@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2, ArrowLeft, Mail } from "lucide-react";
-import { Button } from "../components/ui/button";
+import { ArrowLeft, Mail } from "lucide-react";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import {
@@ -17,6 +16,8 @@ import { useToast } from "../hooks/use-toast";
 import FinwatLogo from "../assets/FinwatLogo";
 import { sendPasswordReset } from "../api/authService";
 import { getAuthErrorMessage } from "../lib/authErrors";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -30,6 +31,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
     try {
       await sendPasswordReset(email.trim());
+      celebrate();
       setSent(true);
     } catch (error) {
       toast({
@@ -107,13 +109,9 @@ const ForgotPassword = () => {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    "Enviar correo"
-                  )}
-                </Button>
+                <ConfirmButton type="submit" className="w-full" loading={isLoading} loadingText="Enviando…">
+                  Enviar correo
+                </ConfirmButton>
               </CardFooter>
             </form>
           )}

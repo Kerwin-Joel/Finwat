@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +9,8 @@ import { parseAmountToCents, parsePercentToRate } from "@/utils/money";
 import type { InvestmentCurrency, ReturnMode } from "@/types/investment";
 import BottomSheet from "./BottomSheet";
 import { AmountInput, Chips, Field } from "./fields";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 const NewLineSheet = ({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) => {
   const navigate = useNavigate();
@@ -62,6 +63,7 @@ const NewLineSheet = ({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
         interest_on_return_mode: mode,
         notes: notes.trim() || null,
       });
+      celebrate();
       toast({ title: `Línea con ${name.trim()} creada` });
       reset();
       onOpenChange(false);
@@ -81,9 +83,9 @@ const NewLineSheet = ({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
       title="Nuevo gestor"
       description="Una línea por cada persona que administra tu dinero."
       footer={
-        <Button className="h-11 w-full" onClick={submit} disabled={saving}>
-          {saving ? "Creando…" : "Crear línea"}
-        </Button>
+        <ConfirmButton className="h-11 w-full" onClick={submit} loading={saving} loadingText="Creando…">
+          Crear línea
+        </ConfirmButton>
       }
     >
       <div className="space-y-4">

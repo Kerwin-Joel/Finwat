@@ -21,6 +21,8 @@ import type {
   TransactionCategory,
   TransactionType,
 } from "../types/transaction";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 // shadcn utils alias workaround if not using `@/lib/utils`
 
@@ -62,6 +64,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
         account_id: accountId,
         transaction_date: format(date, "yyyy-MM-dd"),
       });
+      celebrate();
       toast({
         title: "Movimiento registrado",
         // description: `${type === "income" ? "Ingreso" : "Gasto"} de S/. ${amount} guardado.`,
@@ -238,9 +241,9 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             <Label>Fecha</Label>
             <DatePicker date={date} onDateChange={setDate} />
           </div>
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Guardando..." : "Guardar y Confirmar"}
-          </Button>
+          <ConfirmButton type="submit" className="w-full" loading={isSubmitting} loadingText="Guardando…">
+            Guardar y Confirmar
+          </ConfirmButton>
         </form>
       </DialogContent>
     </Dialog>

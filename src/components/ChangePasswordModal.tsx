@@ -12,6 +12,8 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { useToast } from '../hooks/use-toast';
 import useAuthStore from '../stores/authStore';
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 interface ChangePasswordModalProps {
     isOpen: boolean;
@@ -73,6 +75,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
 
         try {
             await changePassword(currentPassword, newPassword);
+            celebrate();
             toast({
                 title: 'Contraseña actualizada',
                 description: 'Tu contraseña se ha cambiado correctamente.',
@@ -180,9 +183,9 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
                         <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={isLoading}>
-                            {isLoading ? 'Cambiando...' : 'Cambiar Contraseña'}
-                        </Button>
+                        <ConfirmButton type="submit" loading={isLoading} loadingText="Cambiando…">
+                            Cambiar Contraseña
+                        </ConfirmButton>
                     </DialogFooter>
                 </form>
             </DialogContent>

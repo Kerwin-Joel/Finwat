@@ -18,6 +18,8 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from './ui/accordion';
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 interface HelpSupportModalProps {
     isOpen: boolean;
@@ -46,6 +48,7 @@ const HelpSupportModal: React.FC<HelpSupportModalProps> = ({ isOpen, onClose }) 
         // MOCK - simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
 
+        celebrate();
         toast({
             title: 'Mensaje enviado',
             description: 'Nuestro equipo de soporte te responderá pronto.',
@@ -146,10 +149,10 @@ const HelpSupportModal: React.FC<HelpSupportModalProps> = ({ isOpen, onClose }) 
                                 />
                             </div>
 
-                            <Button type="submit" className="w-full" disabled={isSubmitting}>
-                                <Send className="mr-2 h-4 w-4" />
-                                {isSubmitting ? 'Enviando...' : 'Enviar Mensaje'}
-                            </Button>
+                            <ConfirmButton type="submit" className="w-full" loading={isSubmitting} loadingText="Enviando…">
+                                <Send className="h-4 w-4" />
+                                Enviar Mensaje
+                            </ConfirmButton>
                         </form>
                     </TabsContent>
 
