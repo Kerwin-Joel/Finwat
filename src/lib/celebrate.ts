@@ -1,18 +1,25 @@
-// Estallido de onda al confirmar: el frente iridiscente sale del botón hacia afuera con
+// Estallido de onda al confirmar: el frente sale del botón hacia afuera en dos anillos con
 // partículas. Se dibuja en un canvas fijo sobre toda la app (debajo de los toasts), así se
 // ve aunque el modal del botón se cierre en ese mismo momento.
-import { easeOutCubic, makeParticles, prefersReducedMotion, rimGradient } from "./waves";
+//
+// `await celebrate()` primero espera a que la onda del botón se haya visto un mínimo
+// (MIN_WAVE_MS desde que empezó a cargar): si el servidor responde en 200 ms, el usuario
+// igual percibe que la operación ocurrió. Luego lanza el estallido y sigue el flujo.
+import { WAVE_PALETTE, WAVE_PALETTE_LIGHT, easeOutCubic, makeParticles, prefersReducedMotion, rimGradient } from "./waves";
 
-const DURATION = 1000;
-const REACH = 150; // px que crece el anillo
+const DURATION = 1200;
+const REACH = 170; // px que crece el anillo
+const MIN_WAVE_MS = 850;
 
 // Último ConfirmButton que empezó a cargar: celebrate() sin argumentos sale de ahí.
 let lastEl: HTMLElement | null = null;
 let lastRect: DOMRect | null = null;
+let loadingSince = 0;
 
 export const registerConfirmSource = (el: HTMLElement | null) => {
   lastEl = el;
   lastRect = el?.getBoundingClientRect() ?? null;
+  loadingSince = performance.now();
 };
 
 const resolveRect = (target?: HTMLElement | DOMRect | null): DOMRect | null => {
@@ -40,12 +47,9 @@ const roundedRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: num
   ctx.closePath();
 };
 
-/** Lanza la onda desde `target` (o desde el último ConfirmButton que guardó algo) */
-export const celebrate = (target?: HTMLElement | DOMRect | null) => {
-  if (typeof document === "undefined" || prefersReducedMotion()) return;
-  const rect = resolveRect(target);
-  if (!rect || rect.width === 0) return;
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
+const burst = (rect: DOMRect) => {
   const canvas = document.createElement("canvas");
   canvas.setAttribute("aria-hidden", "true");
   Object.assign(canvas.style, {
@@ -69,62 +73,64 @@ export const celebrate = (target?: HTMLElement | DOMRect | null) => {
 
   const cx = rect.left + rect.width / 2;
   const cy = rect.top + rect.height / 2;
-  const particles = makeParticles(56, 0, Math.PI * 2);
+  const particles = makeParticles(64, 0, Math.PI * 2);
   const start = performance.now();
 
-  const frame = (now: number) => {
-    const p = Math.min(1, (now - start) / DURATION);
-    const t = (now - start) / 1000;
-    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-
-    // Anillo: el contorno del botón crece hacia afuera y se desvanece
+  // Un anillo: el contorno del botón crece hacia afuera y se desvanece
+  const ring = (p: number, t: number, strength: number) => {
+    if (p <= 0 || p >= 1) return;
     const grow = easeOutCubic(p) * REACH;
-    const fade = Math.pow(1 - p, 1.4);
+    const fade = Math.pow(1 - p, 1.3) * strength;
     const x = rect.left - grow;
     const y = rect.top - grow * 0.7;
     const w = rect.width + grow * 2;
     const h = rect.height + grow * 1.4;
     const radius = rect.height / 2 + grow * 0.7;
     ctx.lineJoin = "round";
-    const layers: [number, number][] = [
-      [30, 0.16],
-      [16, 0.3],
-      [7, 0.6],
-      [2.5, 0.9],
+    const layers: [number, number, string[]][] = [
+      [34, 0.22, WAVE_PALETTE],
+      [18, 0.42, WAVE_PALETTE],
+      [8, 0.8, WAVE_PALETTE],
+      [3, 1, WAVE_PALETTE_LIGHT],
     ];
-    for (const [lw, a] of layers) {
-      ctx.lineWidth = lw * (1 - p * 0.5);
-      ctx.strokeStyle = rimGradient(ctx, x, y, x + w, y + h, t, a * fade);
+    for (const [lw, a, pal] of layers) {
+      ctx.lineWidth = lw * (1 - p * 0.45);
+      ctx.strokeStyle = rimGradient(ctx, x, y, x + w, y + h, t, a * fade, pal);
       roundedRect(ctx, x, y, w, h, radius);
       ctx.stroke();
     }
-    ctx.lineWidth = 1.2;
-    ctx.strokeStyle = `rgba(255,255,255,${0.85 * fade})`;
-    roundedRect(ctx, x, y, w, h, radius);
-    ctx.stroke();
+  };
 
-    // Destello suave al centro, solo al inicio
-    if (p < 0.35) {
-      const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, rect.width * 0.7);
-      glow.addColorStop(0, `rgba(126,196,255,${0.35 * (1 - p / 0.35)})`);
-      glow.addColorStop(1, "rgba(126,196,255,0)");
+  const frame = (now: number) => {
+    const p = Math.min(1, (now - start) / DURATION);
+    const t = (now - start) / 1000;
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+    // Destello al centro, solo al inicio
+    if (p < 0.3) {
+      const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, rect.width * 0.75);
+      glow.addColorStop(0, `rgba(0,122,255,${0.32 * (1 - p / 0.3)})`);
+      glow.addColorStop(1, "rgba(0,122,255,0)");
       ctx.fillStyle = glow;
       ctx.fillRect(cx - rect.width, cy - rect.width, rect.width * 2, rect.width * 2);
     }
+
+    ring(p / 0.9, t, 1);
+    ring((p - 0.14) / 0.86, t, 0.55); // segundo anillo, más suave
 
     // Partículas desde el borde del botón hacia afuera
     for (const pt of particles) {
       const life = (p - pt.delay * 0.6) / 0.85;
       if (life <= 0 || life >= 1) continue;
-      const dist = easeOutCubic(life) * pt.speed * REACH * 1.25;
+      const dist = easeOutCubic(life) * pt.speed * REACH * 1.3;
       const ox = Math.cos(pt.angle) * (rect.width / 2);
       const oy = Math.sin(pt.angle) * (rect.height / 2);
       const px = cx + ox + Math.cos(pt.angle) * dist;
       const py = cy + oy + Math.sin(pt.angle) * dist + life * life * 18;
-      ctx.globalAlpha = (1 - life) * (0.55 + 0.45 * Math.sin(t * pt.twinkle + pt.sway));
+      ctx.globalAlpha = (1 - life) * (0.6 + 0.4 * Math.sin(t * pt.twinkle + pt.sway));
       ctx.fillStyle = pt.color;
       ctx.beginPath();
-      ctx.arc(px, py, pt.size * 1.2, 0, Math.PI * 2);
+      ctx.arc(px, py, pt.size * 1.35, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
@@ -133,4 +139,25 @@ export const celebrate = (target?: HTMLElement | DOMRect | null) => {
     else canvas.remove();
   };
   requestAnimationFrame(frame);
+};
+
+/**
+ * Éxito: espera a que la onda del botón se haya visto lo mínimo y lanza el estallido desde
+ * `target` (o desde el último ConfirmButton que guardó algo). Usar con `await` antes de
+ * cerrar el modal o pasar a la pantalla de éxito.
+ */
+export const celebrate = async (target?: HTMLElement | DOMRect | null) => {
+  if (typeof document === "undefined" || prefersReducedMotion()) return;
+  const wait = MIN_WAVE_MS - (performance.now() - loadingSince);
+  if (loadingSince && wait > 0 && wait <= MIN_WAVE_MS) await sleep(wait);
+  const rect = resolveRect(target);
+  if (!rect || rect.width === 0) return;
+  burst(rect);
+};
+
+/** Solo espera a que la onda del botón se vea lo mínimo (sin estallido; p. ej. al eliminar) */
+export const holdWave = async () => {
+  if (typeof document === "undefined" || prefersReducedMotion()) return;
+  const wait = MIN_WAVE_MS - (performance.now() - loadingSince);
+  if (loadingSince && wait > 0 && wait <= MIN_WAVE_MS) await sleep(wait);
 };

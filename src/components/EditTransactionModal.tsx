@@ -95,7 +95,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
         account_id: accountId,
         transaction_date: format(date, "yyyy-MM-dd"),
       });
-      celebrate();
+      await celebrate();
       toast({
         title: "Movimiento actualizado",
         description: "Los cambios se han guardado correctamente.",

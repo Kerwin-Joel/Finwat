@@ -64,7 +64,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
         account_id: accountId,
         transaction_date: format(date, "yyyy-MM-dd"),
       });
-      celebrate();
+      await celebrate();
       toast({
         title: "Movimiento registrado",
         // description: `${type === "income" ? "Ingreso" : "Gasto"} de S/. ${amount} guardado.`,

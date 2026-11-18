@@ -48,7 +48,7 @@ const HelpSupportModal: React.FC<HelpSupportModalProps> = ({ isOpen, onClose }) 
         // MOCK - simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        celebrate();
+        await celebrate();
         toast({
             title: 'Mensaje enviado',
             description: 'Nuestro equipo de soporte te responderá pronto.',

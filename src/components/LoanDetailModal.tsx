@@ -109,7 +109,7 @@ const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
       });
       const updated = await loanService.getById(loan.id);
       onUpdated(updated);
-      celebrate();
+      await celebrate();
       setIsEditing(false);
       toast({ title: "✅ Préstamo actualizado" });
     } catch {
@@ -135,7 +135,7 @@ const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
       const updated = await loanService.getById(loan.id);
       onUpdated(updated);
       await loadPaymentsAndHistory();
-      celebrate();
+      await celebrate();
       setShowAddPayment(false);
       setPaymentAmount("");
       setPaymentNotes("");

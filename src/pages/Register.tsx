@@ -63,7 +63,7 @@ const Register = () => {
         setPendingEmail(email.trim());
         return;
       }
-      celebrate();
+      await celebrate();
       toast({
         title: "¡Cuenta creada!",
         description: "Bienvenido a FinWat.",

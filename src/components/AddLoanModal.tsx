@@ -155,7 +155,7 @@ const AddLoanModal: React.FC<AddLoanModalProps> = ({
               }
             : undefined,
       });
-      celebrate();
+      await celebrate();
       onCreated(loan);
       reset();
       toast({ title: "💰 Préstamo registrado" });

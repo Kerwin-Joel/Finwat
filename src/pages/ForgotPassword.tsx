@@ -18,6 +18,7 @@ import { sendPasswordReset } from "../api/authService";
 import { getAuthErrorMessage } from "../lib/authErrors";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { celebrate } from "@/lib/celebrate";
+import { WaveReveal } from "@/components/ui/wave-reveal";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -31,7 +32,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
     try {
       await sendPasswordReset(email.trim());
-      celebrate();
+      await celebrate();
       setSent(true);
     } catch (error) {
       toast({
@@ -73,6 +74,7 @@ const ForgotPassword = () => {
           </CardHeader>
 
           {sent ? (
+            <WaveReveal>
             <CardContent className="space-y-4 text-center py-6">
               <div className="flex justify-center">
                 <div className="bg-green-500/10 p-4 rounded-full">
@@ -93,6 +95,7 @@ const ForgotPassword = () => {
                 ¿No te llegó? Enviar de nuevo
               </button>
             </CardContent>
+            </WaveReveal>
           ) : (
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4">

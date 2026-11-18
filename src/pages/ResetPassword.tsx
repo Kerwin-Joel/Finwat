@@ -18,6 +18,7 @@ import FinwatLogo from "../assets/FinwatLogo";
 import { getAuthErrorMessage } from "../lib/authErrors";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { celebrate } from "@/lib/celebrate";
+import { WaveReveal } from "@/components/ui/wave-reveal";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -95,7 +96,7 @@ const ResetPassword = () => {
       if (error) throw error;
       // Cierra la sesión de recuperación para que inicie sesión con la nueva clave
       await supabase.auth.signOut();
-      celebrate();
+      await celebrate();
       setDone(true);
       setTimeout(() => navigate("/login"), 3000);
     } catch (error) {
@@ -136,6 +137,7 @@ const ResetPassword = () => {
           </CardHeader>
 
           {done ? (
+            <WaveReveal>
             <CardContent className="space-y-4 text-center py-8">
               <div className="flex justify-center">
                 <div className="bg-green-500/10 p-4 rounded-full">
@@ -147,6 +149,7 @@ const ResetPassword = () => {
                 Redirigiendo al inicio de sesión...
               </p>
             </CardContent>
+            </WaveReveal>
           ) : !isValidSession ? (
             <CardContent className="text-center py-8">
               {linkError ? (

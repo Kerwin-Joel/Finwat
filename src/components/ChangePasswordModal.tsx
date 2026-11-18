@@ -75,7 +75,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
 
         try {
             await changePassword(currentPassword, newPassword);
-            celebrate();
+            await celebrate();
             toast({
                 title: 'Contraseña actualizada',
                 description: 'Tu contraseña se ha cambiado correctamente.',

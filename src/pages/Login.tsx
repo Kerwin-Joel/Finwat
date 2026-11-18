@@ -38,7 +38,7 @@ const Login = () => {
 
     try {
       await login({ email: email.trim(), password });
-      celebrate();
+      await celebrate();
       navigate("/splash");
     } catch (error) {
       setNeedsConfirmation(isEmailNotConfirmed(error));

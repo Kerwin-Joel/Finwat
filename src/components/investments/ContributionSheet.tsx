@@ -159,7 +159,7 @@ const ContributionSheet = ({
     try {
       if (editing && contribution) {
         const r = await investmentService.updateContribution(contribution.id, input, reason.trim() || undefined);
-        celebrate();
+        await celebrate();
         toast({
           title: r.corrected ? "Aporte corregido" : "Aporte actualizado",
           description: r.corrected ? "El anterior quedó anulado en el historial y sus cuotas se recalcularon." : undefined,
@@ -179,7 +179,7 @@ const ContributionSheet = ({
         { ...input, voucher_path: voucherPath, voucher_hash: voucherHash },
         false,
       );
-      celebrate();
+      await celebrate();
       setPreview(r);
       setDone(true);
       onDone();

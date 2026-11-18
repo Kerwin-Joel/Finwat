@@ -10,7 +10,7 @@ import { ShieldCheck } from "lucide-react";
 import BottomSheet from "./BottomSheet";
 import { Field } from "./fields";
 import { ConfirmButton } from "@/components/ui/confirm-button";
-import { celebrate } from "@/lib/celebrate";
+import { celebrate, holdWave } from "@/lib/celebrate";
 
 // ------------------------------------------------------------------ Cambio de tasa
 /** Por aporte (desde un periodo) o para toda la línea (desde una fecha). Nunca toca cuotas pagadas. */
@@ -80,7 +80,7 @@ export const RateChangeSheet = ({
       } else {
         await investmentService.changeLineRate(summary.line_id, rateValue, effective, why);
       }
-      celebrate();
+      await celebrate();
       toast({ title: `Tasa cambiada a ${formatRate(rateValue)}` });
       onOpenChange(false);
       setRate("");
@@ -168,6 +168,7 @@ export const VoidSheet = ({
     setSaving(true);
     try {
       await investmentService.voidMovement(target.type, target.id, reason.trim() || "Eliminado por el usuario");
+      await holdWave();
       toast({
         title: isPayment ? "Pago eliminado" : "Aporte eliminado",
         description: "Lo encontrarás en la pestaña Auditoría.",

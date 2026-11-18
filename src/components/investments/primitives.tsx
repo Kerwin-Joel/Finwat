@@ -19,6 +19,7 @@ import type {
   ScheduleDisplayStatus,
 } from "@/types/investment";
 import { RECON_LABEL, SCHEDULE_LABEL } from "@/types/investment";
+import { WaveReveal } from "@/components/ui/wave-reveal";
 
 // ------------------------------------------------------------------ CountUp
 /** Cifra que cuenta hasta su valor (~600 ms). Sin animación si el usuario la reduce. */
@@ -51,7 +52,11 @@ export const CountUp = ({
     return () => controls.stop();
   }, [cents, reduce]);
 
-  return <span className={cn("tabular-nums", className)}>{formatCents(reduce ? cents : value, currency)}</span>;
+  return (
+    <span className={cn("tabular-nums", className)}>
+      {formatCents(reduce ? cents : value, currency)}
+    </span>
+  );
 };
 
 // ------------------------------------------------------------------ ProgressRing
@@ -80,7 +85,14 @@ export const ProgressRing = ({
             <stop offset="100%" stopColor="#1a44c4" />
           </linearGradient>
         </defs>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} className="stroke-muted" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          strokeWidth={stroke}
+          className="stroke-muted"
+        />
         <motion.circle
           cx={size / 2}
           cy={size / 2}
@@ -104,14 +116,20 @@ export const ProgressRing = ({
 };
 
 // ------------------------------------------------------------------ estados
-const SCHEDULE_STYLE: Record<ScheduleDisplayStatus, { cls: string; Icon: typeof Circle }> = {
+const SCHEDULE_STYLE: Record<
+  ScheduleDisplayStatus,
+  { cls: string; Icon: typeof Circle }
+> = {
   programada: { cls: "bg-muted text-muted-foreground", Icon: Circle },
   por_vencer: { cls: "bg-sky-500/15 text-sky-400", Icon: Clock },
   vencida: { cls: "bg-orange-500/15 text-orange-400", Icon: AlertTriangle },
   parcial: { cls: "bg-amber-500/15 text-amber-400", Icon: CircleDashed },
   pagada: { cls: "bg-emerald-500/15 text-emerald-400", Icon: CheckCircle2 },
   condonada: { cls: "bg-violet-500/15 text-violet-400", Icon: HandCoins },
-  anulada: { cls: "bg-muted text-muted-foreground line-through", Icon: CircleSlash },
+  anulada: {
+    cls: "bg-muted text-muted-foreground line-through",
+    Icon: CircleSlash,
+  },
 };
 
 export const ScheduleBadge = ({
@@ -125,7 +143,12 @@ export const ScheduleBadge = ({
 }) => {
   const { cls, Icon } = SCHEDULE_STYLE[status];
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium", cls)}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+        cls,
+      )}
+    >
       <Icon className="h-3 w-3" aria-hidden="true" />
       {SCHEDULE_LABEL[status]}
       {partial && status === "vencida" ? " · parcial" : ""}
@@ -134,16 +157,35 @@ export const ScheduleBadge = ({
   );
 };
 
-const HEALTH: Record<LineHealth, { label: string; cls: string; Icon: typeof Circle }> = {
+const HEALTH: Record<
+  LineHealth,
+  { label: string; cls: string; Icon: typeof Circle }
+> = {
   al_dia: { label: "Al día", cls: "text-emerald-400", Icon: CheckCircle2 },
   por_vencer: { label: "Por vencer", cls: "text-sky-400", Icon: Clock },
-  vencido: { label: "Con vencidos", cls: "text-orange-400", Icon: AlertTriangle },
+  vencido: {
+    label: "Con vencidos",
+    cls: "text-orange-400",
+    Icon: AlertTriangle,
+  },
 };
 
-export const HealthIndicator = ({ health, className }: { health: LineHealth; className?: string }) => {
+export const HealthIndicator = ({
+  health,
+  className,
+}: {
+  health: LineHealth;
+  className?: string;
+}) => {
   const { label, cls, Icon } = HEALTH[health];
   return (
-    <span className={cn("inline-flex items-center gap-1 text-xs font-medium", cls, className)}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 text-xs font-medium",
+        cls,
+        className,
+      )}
+    >
       <Icon className="h-3.5 w-3.5" aria-hidden="true" />
       {label}
     </span>
@@ -165,7 +207,11 @@ export const ReconBadge = ({ status }: { status: ReconStatus }) => (
 );
 
 // ------------------------------------------------------------------ advertencias
-export const WarningList = ({ warnings }: { warnings: InvestmentWarning[] }) => {
+export const WarningList = ({
+  warnings,
+}: {
+  warnings: InvestmentWarning[];
+}) => {
   if (!warnings.length) return null;
   return (
     <ul className="space-y-2" aria-live="polite">
@@ -176,13 +222,18 @@ export const WarningList = ({ warnings }: { warnings: InvestmentWarning[] }) => 
             key={`${w.code}-${i}`}
             className={cn(
               "flex gap-2 rounded-lg border p-3 text-xs",
-              info ? "border-sky-500/30 bg-sky-500/10 text-sky-300" : "border-orange-500/40 bg-orange-500/10 text-orange-300",
+              info
+                ? "border-sky-500/30 bg-sky-500/10 text-sky-300"
+                : "border-orange-500/40 bg-orange-500/10 text-orange-300",
             )}
           >
             {info ? (
               <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             ) : (
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <AlertTriangle
+                className="mt-0.5 h-4 w-4 shrink-0"
+                aria-hidden="true"
+              />
             )}
             <span>{w.message}</span>
           </li>
@@ -204,7 +255,12 @@ export const Stat = ({
   tone?: "default" | "good" | "warn" | "muted";
   className?: string;
 }) => (
-  <div className={cn("surface flex flex-col justify-between gap-1.5 p-4", className)}>
+  <div
+    className={cn(
+      "surface flex flex-col justify-between gap-1.5 p-4",
+      className,
+    )}
+  >
     <p className="eyebrow text-muted-foreground">{label}</p>
     <p
       className={cn(
@@ -220,37 +276,54 @@ export const Stat = ({
 );
 
 /** Check animado al confirmar una operación */
-export const SuccessCheck = ({ title, subtitle }: { title: string; subtitle?: string }) => {
+/** Pantalla de éxito: la onda de marca revela el resultado y luego se dibuja el check */
+export const SuccessCheck = ({
+  title,
+  subtitle,
+}: {
+  title: string;
+  subtitle?: string;
+}) => {
   const reduce = useReducedMotion();
   return (
-    <div className="flex flex-col items-center gap-3 py-8 text-center" role="status">
-      <svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true">
-        <motion.circle
-          cx="36"
-          cy="36"
-          r="32"
-          fill="none"
-          stroke="#10b981"
-          strokeWidth="4"
-          initial={{ pathLength: reduce ? 1 : 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: reduce ? 0 : 0.4 }}
-        />
-        <motion.path
-          d="M22 37 L32 47 L51 27"
-          fill="none"
-          stroke="#10b981"
-          strokeWidth="5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          initial={{ pathLength: reduce ? 1 : 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: reduce ? 0 : 0.3, delay: reduce ? 0 : 0.35 }}
-        />
-      </svg>
-      <p className="text-base font-semibold">{title}</p>
-      {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
-    </div>
+    <WaveReveal>
+      <div
+        className="flex flex-col items-center gap-3 py-8 text-center"
+        role="status"
+      >
+        <svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true">
+          <motion.circle
+            cx="36"
+            cy="36"
+            r="32"
+            fill="none"
+            stroke="#10b981"
+            strokeWidth="4"
+            initial={{ pathLength: reduce ? 1 : 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{
+              duration: reduce ? 0 : 0.4,
+              delay: reduce ? 0 : 0.55,
+            }}
+          />
+          <motion.path
+            d="M22 37 L32 47 L51 27"
+            fill="none"
+            stroke="#10b981"
+            strokeWidth="5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            initial={{ pathLength: reduce ? 1 : 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: reduce ? 0 : 0.3, delay: reduce ? 0 : 0.9 }}
+          />
+        </svg>
+        <p className="text-base font-semibold">{title}</p>
+        {subtitle && (
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
+        )}
+      </div>
+    </WaveReveal>
   );
 };
 
@@ -268,7 +341,9 @@ export const EmptyState = ({
   <div className="flex flex-col items-center gap-2 py-10 text-center">
     <div className="text-muted-foreground/40">{icon}</div>
     <p className="text-sm font-medium">{title}</p>
-    {description && <p className="max-w-xs text-xs text-muted-foreground">{description}</p>}
+    {description && (
+      <p className="max-w-xs text-xs text-muted-foreground">{description}</p>
+    )}
     {action && <div className="pt-2">{action}</div>}
   </div>
 );

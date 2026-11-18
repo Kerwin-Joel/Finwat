@@ -55,7 +55,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) 
                 dateOfBirth: dateOfBirth || undefined,
             });
 
-            celebrate();
+            await celebrate();
             toast({
                 title: 'Perfil actualizado',
                 description: 'Tus datos se han guardado correctamente.',

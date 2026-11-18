@@ -649,7 +649,7 @@ export const SettingsTab = ({
         due_soon_days: Math.max(0, Math.min(31, Number(dueSoon) || 0)),
         payment_grace_days: Math.max(0, Math.min(31, Number(grace) || 0)),
       });
-      celebrate();
+      await celebrate();
       toast({ title: "Ajustes guardados" });
       onSaved();
     } catch (err) {

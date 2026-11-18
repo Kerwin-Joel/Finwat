@@ -63,7 +63,7 @@ const NewLineSheet = ({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
         interest_on_return_mode: mode,
         notes: notes.trim() || null,
       });
-      celebrate();
+      await celebrate();
       toast({ title: `Línea con ${name.trim()} creada` });
       reset();
       onOpenChange(false);

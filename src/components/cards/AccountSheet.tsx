@@ -109,7 +109,7 @@ const AccountSheet = ({
         await addAccount(draft, principal);
         toast({ title: `${draft.name} agregada` });
       }
-      celebrate();
+      await celebrate();
       onOpenChange(false);
     } catch (err) {
       toast({ title: "No se pudo guardar", description: (err as Error).message, variant: "destructive" });

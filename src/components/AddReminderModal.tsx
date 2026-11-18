@@ -106,7 +106,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
         recurrence,
         notes: notes.trim() || undefined,
       });
-      celebrate();
+      await celebrate();
       onCreated(reminder);
       reset();
       toast({ title: "🔔 Recordatorio creado" });

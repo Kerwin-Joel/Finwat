@@ -301,7 +301,7 @@ const PaymentSheet = ({
         },
         false,
       );
-      celebrate();
+      await celebrate();
       setPreview(r);
       setStep(3);
       onDone();

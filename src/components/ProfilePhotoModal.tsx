@@ -69,7 +69,7 @@ const ProfilePhotoModal: React.FC<ProfilePhotoModalProps> = ({ isOpen, onClose }
 
         try {
             await updateProfilePhoto(previewUrl);
-            celebrate();
+            await celebrate();
             toast({
                 title: 'Foto actualizada',
                 description: 'Tu foto de perfil se ha actualizado correctamente.',
