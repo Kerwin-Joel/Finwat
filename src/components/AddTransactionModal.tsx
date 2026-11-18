@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { cn } from "../lib/utils";
-import { Button } from "./ui/button";
+import TypeToggle from "@/components/transactions/TypeToggle";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import {
   Select,
@@ -93,38 +92,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           <DialogTitle>Nuevo Movimiento</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Button
-              type="button"
-              //   variant={type === "expense" ? "default" : "outline"}
-              //   className={cn(
-              //     type === "expense" && "bg-red-600 hover:bg-red-700",
-              //   )}
-              //   onClick={() => setType("expense")}
-              variant={type === "expense" ? "default" : "outline"}
-              className={cn(
-                type === "expense" && "bg-red-600 hover:bg-red-700",
-              )}
-              onClick={() => setType("expense")}
-            >
-              Egreso
-            </Button>
-            <Button
-              type="button"
-              //   variant={type === "income" ? "default" : "outline"}
-              //   className={cn(
-              //     type === "income" && "bg-green-600 hover:bg-green-700",
-              //   )}
-              //   onClick={() => setType("income")}
-              variant={type === "income" ? "default" : "outline"}
-              className={cn(
-                type === "income" && "bg-green-600 hover:bg-green-700",
-              )}
-              onClick={() => setType("income")}
-            >
-              Ingreso
-            </Button>
-          </div>
+          <TypeToggle id="add-type" value={type} onChange={setType} />
 
           <div className="space-y-2">
             <Label htmlFor="amount">Monto</Label>

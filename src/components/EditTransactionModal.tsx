@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { Trash2 } from "lucide-react";
+import TypeToggle from "@/components/transactions/TypeToggle";
+import { formatCurrency } from "@/utils/formatCurrency";
 import { format } from "date-fns";
-import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "./ui/dialog";
 import {
   Select,
@@ -71,7 +71,6 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
 
   useEffect(() => {
     if (transaction) {
-      console.log("🔍 account_id:", transaction.account_id);
       setType(transaction.type);
       setAmount(transaction.amount.toString());
       setDescription(transaction.description ?? "");
@@ -80,6 +79,15 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
       setDate(parseDate(transaction.transaction_date)); // ✅
     }
   }, [transaction]);
+
+  const dirty =
+    !!transaction &&
+    (type !== transaction.type ||
+      parseFloat(amount || "0") !== Number(transaction.amount) ||
+      description !== (transaction.description ?? "") ||
+      category !== transaction.category ||
+      accountId !== transaction.account_id ||
+      format(date, "yyyy-MM-dd") !== transaction.transaction_date);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,31 +147,10 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Editar Movimiento</DialogTitle>
+          <DialogTitle>Editar movimiento</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Button
-              type="button"
-              variant={type === "expense" ? "default" : "outline"}
-              className={cn(
-                type === "expense" && "bg-red-600 hover:bg-red-700",
-              )}
-              onClick={() => setType("expense")}
-            >
-              Egreso
-            </Button>
-            <Button
-              type="button"
-              variant={type === "income" ? "default" : "outline"}
-              className={cn(
-                type === "income" && "bg-green-600 hover:bg-green-700",
-              )}
-              onClick={() => setType("income")}
-            >
-              Ingreso
-            </Button>
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          <TypeToggle id="edit-type" value={type} onChange={setType} />
 
           <div className="space-y-2">
             <Label htmlFor="edit-amount">Monto</Label>
@@ -276,44 +263,50 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
             <Label>Fecha</Label>
             <DatePicker date={date} onDateChange={setDate} />
           </div>
-          <DialogFooter className="flex gap-2 sm:gap-0 mt-4">
+          <div className="flex flex-col gap-1.5 pt-3">
+            <ConfirmButton
+              type="submit"
+              size="lg"
+              className="w-full"
+              disabled={!dirty}
+              loading={isSubmitting}
+              loadingText="Guardando…"
+            >
+              {dirty ? "Guardar cambios" : "Sin cambios"}
+            </ConfirmButton>
+
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
                   type="button"
-                  variant="destructive"
-                  className="flex-1 sm:flex-none"
-                  disabled={isDeleting}
+                  variant="ghost"
+                  className="w-full gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  disabled={isDeleting || isSubmitting}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Eliminar
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar movimiento
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="max-w-[360px] rounded-3xl">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                  <AlertDialogTitle>¿Eliminar este movimiento?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta acción no se puede deshacer. Se eliminará
-                    permanentemente la transacción "{description}" de S/.{" "}
-                    {amount}.
+                    Se eliminará «{description || "sin descripción"}» por{" "}
+                    {formatCurrency(parseFloat(amount || "0"))}. Esta acción no se puede deshacer.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogFooter className="gap-2 sm:gap-2">
+                  <AlertDialogCancel className="rounded-full">Cancelar</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
                     Eliminar
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-
-            <ConfirmButton type="submit" className="flex-1" loading={isSubmitting} loadingText="Guardando…">
-              Guardar Cambios
-            </ConfirmButton>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

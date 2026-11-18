@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { Transaction } from "../types/transaction";
 import useCategoryStore from "../stores/categoryStore";
@@ -12,11 +13,12 @@ interface TransactionItemProps {
   onClick?: (transaction: Transaction) => void;
 }
 
-const TransactionItem: React.FC<TransactionItemProps> = ({
+// layout: al reordenar, cada fila se desliza a su nueva posición (FLIP) en vez de saltar.
+const TransactionItem = forwardRef<HTMLButtonElement, TransactionItemProps>(({
   transaction,
   index,
   onClick,
-}) => {
+}, ref) => {
   const { getCategory } = useCategoryStore();
   const reduce = useReducedMotion();
   const categoryData = getCategory(transaction.category);
@@ -24,10 +26,18 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
 
   return (
     <motion.button
+      ref={ref}
       type="button"
+      layout={reduce ? false : "position"}
       initial={reduce ? false : { opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index, 10) * 0.035, duration: 0.45, ease: EASE_OUT }}
+      exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97, transition: { duration: 0.2, ease: EASE_OUT } }}
+      transition={{
+        delay: Math.min(index, 10) * 0.035,
+        duration: 0.45,
+        ease: EASE_OUT,
+        layout: { type: "spring", stiffness: 260, damping: 32, mass: 0.9, delay: 0 },
+      }}
       className="flex w-full items-center justify-between gap-3 rounded-xl px-2.5 py-3 text-left transition-colors duration-200 hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:bg-accent"
       onClick={() => onClick?.(transaction)}
     >
@@ -69,6 +79,7 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
       </p>
     </motion.button>
   );
-};
+});
+TransactionItem.displayName = "TransactionItem";
 
 export default TransactionItem;

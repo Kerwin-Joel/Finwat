@@ -1,4 +1,5 @@
 import { ArrowUpDown, Filter, CalendarIcon } from "lucide-react";
+import { AnimatePresence, LayoutGroup } from "framer-motion";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "../lib/utils";
@@ -126,7 +127,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
                       onValueChange={(val) =>
                         onFilterChange?.({
                           ...filters,
-                          type: val === "ALL" ? undefined : (val as any),
+                          type: val === "ALL" ? undefined : (val as TransactionFilters["type"]),
                         })
                       }
                     >
@@ -148,7 +149,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
                       onValueChange={(val) =>
                         onFilterChange?.({
                           ...filters,
-                          category: val === "ALL" ? undefined : (val as any),
+                          category: val === "ALL" ? undefined : (val as TransactionFilters["category"]),
                         })
                       }
                     >
@@ -342,20 +343,24 @@ const TransactionList: React.FC<TransactionListProps> = ({
         />
       </div>
 
-      <div className="surface divide-y divide-border/60 overflow-hidden px-1.5">
+      <div className="surface overflow-hidden px-1.5 py-1">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <SkeletonTransactionItem key={i} />
           ))
         ) : displayTransactions.length > 0 ? (
-          displayTransactions.map((transaction, index) => (
-            <TransactionItem
-              key={transaction.id}
-              transaction={transaction}
-              index={index}
-              onClick={onTransactionClick}
-            />
-          ))
+          <LayoutGroup id="transactions">
+            <AnimatePresence initial={false} mode="popLayout">
+              {displayTransactions.map((transaction, index) => (
+                <TransactionItem
+                  key={transaction.id}
+                  transaction={transaction}
+                  index={index}
+                  onClick={onTransactionClick}
+                />
+              ))}
+            </AnimatePresence>
+          </LayoutGroup>
         ) : (
           <div className="py-10 text-center text-sm text-muted-foreground">
             Aún no hay movimientos. Regístralos aquí o por WhatsApp.
