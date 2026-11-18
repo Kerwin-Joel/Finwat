@@ -10,19 +10,20 @@ import { formatDay, relativeDay } from "@/utils/investmentDates";
 import type { CurrencyKpis, InvestmentCurrency, LineSummary } from "@/types/investment";
 import { CountUp, EmptyState, HealthIndicator, ProgressRing } from "@/components/investments/primitives";
 import NewLineSheet from "@/components/investments/NewLineSheet";
+import KpiBreakdownSheet, { type KpiKind } from "@/components/investments/KpiBreakdownSheet";
 import { Amount } from "@/components/ui/amount";
 import { EASE_OUT, riseItem, staggerContainer } from "@/lib/motion";
 
 const stagger = staggerContainer;
 const item = riseItem;
 
-const KPIS: { key: keyof CurrencyKpis; label: string; tone?: "warn" | "good" }[] = [
+const KPIS: { key: keyof CurrencyKpis; label: string; tone?: "warn" | "good"; kind?: KpiKind }[] = [
   { key: "capital_outstanding_cents", label: "Capital colocado" },
   { key: "monthly_interest_expected_cents", label: "Interés esperado del mes" },
   { key: "month_collected_cents", label: "Cobrado del mes", tone: "good" },
   { key: "month_pending_cents", label: "Pendiente del mes" },
-  { key: "overdue_cents", label: "Vencido", tone: "warn" },
-  { key: "interest_collected_total_cents", label: "Rendimiento", tone: "good" },
+  { key: "overdue_cents", label: "Vencido", tone: "warn", kind: "vencido" },
+  { key: "interest_collected_total_cents", label: "Rendimiento", tone: "good", kind: "rendimiento" },
 ];
 
 const LineCard = ({ line, onOpen }: { line: LineSummary; onOpen: () => void }) => {
@@ -79,6 +80,7 @@ const Investments = () => {
   const navigate = useNavigate();
   const { overview, overviewLoading, overviewError, fetchOverview } = useInvestmentStore();
   const [showNew, setShowNew] = useState(false);
+  const [kpi, setKpi] = useState<{ kind: KpiKind; currency: InvestmentCurrency } | null>(null);
 
   useEffect(() => {
     fetchOverview();
@@ -164,22 +166,41 @@ const Investments = () => {
                   className="mt-1 text-[42px] font-light leading-none tracking-[-0.045em] md:text-[52px]"
                 />
                 <div className="mt-6 grid grid-cols-3 gap-2">
-                  {[
-                    { label: "Esperado", v: k.monthly_interest_expected_cents },
-                    { label: "Cobrado", v: k.month_collected_cents },
-                    { label: "Pendiente", v: k.month_pending_cents },
-                  ].map((s) => (
-                    <div key={s.label} className="glass-on-hero rounded-2xl px-3 py-2.5">
-                      <p className="text-[10.5px] leading-tight text-white/65">{s.label}</p>
+                  {([
+                    { label: "Esperado", v: k.monthly_interest_expected_cents, kind: "esperado" },
+                    { label: "Cobrado", v: k.month_collected_cents, kind: "cobrado" },
+                    { label: "Pendiente", v: k.month_pending_cents, kind: "pendiente" },
+                  ] as const).map((s) => (
+                    <button
+                      key={s.label}
+                      type="button"
+                      onClick={() => setKpi({ kind: s.kind, currency: cur })}
+                      aria-label={`Ver detalle de ${s.label.toLowerCase()}`}
+                      className="glass-on-hero rounded-2xl px-3 py-2.5 text-left transition-[transform,background-color] duration-200 ease-out-expo hover:bg-white/20 active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                    >
+                      <p className="flex items-center justify-between text-[10.5px] leading-tight text-white/65">
+                        {s.label}
+                        <ChevronRight className="h-3 w-3 text-white/50" aria-hidden="true" />
+                      </p>
                       <CountUp cents={s.v} currency={cur} className="mt-1 block text-[13px] font-medium text-white" />
-                    </div>
+                    </button>
                   ))}
                 </div>
               </motion.div>
               <motion.div className="grid grid-cols-2 gap-3" initial="hidden" animate="show" variants={stagger}>
                 {KPIS.filter((kpi) => kpi.key === "overdue_cents" || kpi.key === "interest_collected_total_cents").map((kpi) => (
-                  <motion.div key={kpi.key} variants={item} className="surface p-4">
-                    <p className="eyebrow text-muted-foreground">{kpi.label}</p>
+                  <motion.button
+                    key={kpi.key}
+                    type="button"
+                    variants={item}
+                    onClick={() => kpi.kind && setKpi({ kind: kpi.kind, currency: cur })}
+                    aria-label={`Ver detalle de ${kpi.label.toLowerCase()}`}
+                    className="surface p-4 text-left transition-transform duration-200 ease-out-expo active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <p className="eyebrow flex items-center justify-between text-muted-foreground">
+                      {kpi.label}
+                      <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </p>
                     <CountUp
                       cents={k[kpi.key]}
                       currency={cur}
@@ -187,7 +208,7 @@ const Investments = () => {
                         kpi.tone === "warn" && k[kpi.key] > 0 ? "text-orange-500" : kpi.tone === "good" && k[kpi.key] > 0 ? "text-positive" : ""
                       }`}
                     />
-                  </motion.div>
+                  </motion.button>
                 ))}
               </motion.div>
             </section>
@@ -251,6 +272,13 @@ const Investments = () => {
       </div>
 
       <NewLineSheet open={showNew} onOpenChange={setShowNew} />
+      <KpiBreakdownSheet
+        kind={kpi?.kind ?? null}
+        onOpenChange={(o) => !o && setKpi(null)}
+        lines={lines}
+        currency={kpi?.currency ?? "PEN"}
+        today={overview?.today ?? new Date().toISOString().slice(0, 10)}
+      />
     </div>
   );
 };

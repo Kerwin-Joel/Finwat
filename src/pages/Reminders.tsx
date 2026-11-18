@@ -25,6 +25,7 @@ import { reminderService } from "../api/reminderService";
 import type { Reminder } from "../types/reminder";
 import AddReminderModal from "@/components/AddReminderModal";
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { reminderLocal } from "@/utils/reminderTime";
 
 const fadeUp = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 
@@ -72,6 +73,7 @@ const Reminders = () => {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const [editing, setEditing] = useState<Reminder | null>(null);
 
   const fetchReminders = async () => {
     if (!user?.id) return;
@@ -100,37 +102,58 @@ const Reminders = () => {
   );
   const overdue = useMemo(
     () =>
-      pending.filter(
-        (r) => isPast(parseISO(r.due_date)) && !isToday(parseISO(r.due_date)),
-      ),
+      pending.filter((r) => {
+        const d = parseISO(reminderLocal(r).date);
+        return isPast(d) && !isToday(d);
+      }),
     [pending],
   );
 
   const handleComplete = async (id: string) => {
-    await reminderService.complete(id);
-    setReminders((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: "completed" } : r)),
-    );
-    toast({ title: "✅ Recordatorio completado" });
+    try {
+      await reminderService.complete(id);
+      setReminders((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, status: "completed" } : r)),
+      );
+      toast({ title: "✅ Recordatorio completado" });
+    } catch {
+      toast({ title: "No se pudo completar el recordatorio", variant: "destructive" });
+    }
   };
 
   const handleDelete = async (id: string) => {
-    await reminderService.delete(id);
-    setReminders((prev) => prev.filter((r) => r.id !== id));
-    toast({ title: "Recordatorio eliminado" });
+    try {
+      await reminderService.delete(id);
+      setReminders((prev) => prev.filter((r) => r.id !== id));
+      toast({ title: "Recordatorio eliminado" });
+    } catch {
+      toast({ title: "No se pudo eliminar el recordatorio", variant: "destructive" });
+    }
   };
 
   const ReminderCard = ({ reminder }: { reminder: Reminder }) => {
     const typeConf = TYPE_CONFIG[reminder.type];
-    const daysInfo = getDaysLabel(reminder.due_date);
+    // Fecha y hora en hora local (con hora, la base las guarda en UTC)
+    const local = reminderLocal(reminder);
+    const daysInfo = getDaysLabel(local.date);
     const isOverdue =
-      isPast(parseISO(reminder.due_date)) &&
-      !isToday(parseISO(reminder.due_date));
+      isPast(parseISO(local.date)) &&
+      !isToday(parseISO(local.date));
 
     return (
       <motion.div variants={fadeUp}>
         <Card
-          className={`border-border/50 bg-card/60 ${isOverdue ? "border-red-500/30" : ""}`}
+          role="button"
+          tabIndex={0}
+          aria-label={`Editar recordatorio ${reminder.title}`}
+          onClick={() => setEditing(reminder)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setEditing(reminder);
+            }
+          }}
+          className={`cursor-pointer border-border/50 bg-card/60 transition-[transform,background-color] duration-200 ease-out-expo hover:bg-accent/40 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isOverdue ? "border-red-500/30" : ""}`}
         >
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-3">
@@ -155,11 +178,11 @@ const Reminders = () => {
                   </div>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <span className="text-xs text-muted-foreground">
-                      {format(parseISO(reminder.due_date), "d 'de' MMMM", {
+                      {format(parseISO(local.date), "d 'de' MMMM", {
                         locale: es,
                       })}
-                      {reminder.due_time &&
-                        ` · ${new Date(`${reminder.due_date}T${reminder.due_time}Z`).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: true })}`}
+                      {local.time &&
+                        ` · ${new Date(`${local.date}T${local.time}:00`).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: true })}`}
                     </span>
                     {reminder.notify_advance > 0 && (
                       <span className="text-[10px] text-muted-foreground">
@@ -184,7 +207,8 @@ const Reminders = () => {
                   {daysInfo.label}
                 </span>
                 {reminder.status === "pending" && (
-                  <div className="flex gap-1">
+                  // Las acciones no abren la edición
+                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                     <ConfirmButton
                       size="sm"
                       variant="ghost"
@@ -376,12 +400,14 @@ const Reminders = () => {
       </Tabs>
 
       <AddReminderModal
-        isOpen={showAdd}
-        onClose={() => setShowAdd(false)}
-        onCreated={(r) => {
-          setReminders((prev) => [...prev, r]);
+        isOpen={showAdd || editing !== null}
+        reminder={editing}
+        onClose={() => {
           setShowAdd(false);
+          setEditing(null);
         }}
+        onCreated={(r) => setReminders((prev) => [...prev, r])}
+        onUpdated={(r) => setReminders((prev) => prev.map((x) => (x.id === r.id ? r : x)))}
       />
     </div>
   );

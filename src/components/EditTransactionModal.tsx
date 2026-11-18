@@ -1,33 +1,12 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
-import TypeToggle from "@/components/transactions/TypeToggle";
-import { formatCurrency } from "@/utils/formatCurrency";
-import { format } from "date-fns";
 import { Button } from "./ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { DatePicker } from "./ui/calendar";
+import BottomSheet from "@/components/investments/BottomSheet";
+import TransactionFields from "@/components/transactions/TransactionFields";
+import { draftErrors, type TransactionDraft } from "@/utils/transactionDraft";
 import { useToast } from "../hooks/use-toast";
 import useTransactionStore from "../stores/transactionStore";
-import useAccountStore from "../stores/accountStore";
-import type {
-  Transaction,
-  TransactionCategory,
-  TransactionType,
-} from "../types/transaction";
+import type { Transaction } from "../types/transaction";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -38,10 +17,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import useCategoryStore from "../stores/categoryStore";
-import { parseDate } from "@/utils/dateUtils";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { celebrate } from "@/lib/celebrate";
+import { formatCurrency } from "@/utils/formatCurrency";
+
+// Editar movimiento: mismo formulario y estilo que "Nuevo movimiento" e Inversiones.
+// Guardar se habilita solo si algo cambió; eliminar es una acción discreta con confirmación.
 
 interface EditTransactionModalProps {
   isOpen: boolean;
@@ -49,268 +30,138 @@ interface EditTransactionModalProps {
   transaction: Transaction | null;
 }
 
-const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
-  isOpen,
-  onClose,
-  transaction,
-}) => {
+const fromTransaction = (t: Transaction): TransactionDraft => ({
+  type: t.type,
+  amount: String(t.amount),
+  description: t.description ?? "",
+  category: t.category,
+  accountId: t.account_id,
+  date: t.transaction_date,
+});
+
+const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onClose, transaction }) => {
   const { updateTransaction, deleteTransaction } = useTransactionStore();
-  const { accounts } = useAccountStore();
   const { toast } = useToast();
 
-  const [type, setType] = useState<TransactionType>("expense");
-  const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<TransactionCategory>("OTROS");
-  const [accountId, setAccountId] = useState("");
-  const [date, setDate] = useState<Date>(new Date());
+  const [draft, setDraft] = useState<TransactionDraft | null>(transaction ? fromTransaction(transaction) : null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { categories } = useCategoryStore();
 
   useEffect(() => {
-    if (transaction) {
-      setType(transaction.type);
-      setAmount(transaction.amount.toString());
-      setDescription(transaction.description ?? "");
-      setCategory(transaction.category);
-      setAccountId(transaction.account_id); // ✅
-      setDate(parseDate(transaction.transaction_date)); // ✅
-    }
+    if (transaction) setDraft(fromTransaction(transaction));
   }, [transaction]);
 
+  if (!transaction || !draft) return null;
+
+  const amountNumber = Number(draft.amount.replace(",", "."));
+  const valid = !Object.values(draftErrors(draft, true)).some(Boolean);
   const dirty =
-    !!transaction &&
-    (type !== transaction.type ||
-      parseFloat(amount || "0") !== Number(transaction.amount) ||
-      description !== (transaction.description ?? "") ||
-      category !== transaction.category ||
-      accountId !== transaction.account_id ||
-      format(date, "yyyy-MM-dd") !== transaction.transaction_date);
+    draft.type !== transaction.type ||
+    amountNumber !== Number(transaction.amount) ||
+    draft.description !== (transaction.description ?? "") ||
+    draft.category !== transaction.category ||
+    draft.accountId !== transaction.account_id ||
+    draft.date !== transaction.transaction_date;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!transaction || !amount || !description || !accountId) return;
-
+  const submit = async () => {
+    if (!valid || !dirty || isSubmitting) return;
     setIsSubmitting(true);
     try {
       await updateTransaction(transaction.id, {
-        type,
-        amount: parseFloat(amount),
-        description,
-        category,
-        account_id: accountId,
-        transaction_date: format(date, "yyyy-MM-dd"),
+        type: draft.type,
+        amount: amountNumber,
+        description: draft.description.trim(),
+        category: draft.category,
+        account_id: draft.accountId,
+        transaction_date: draft.date,
       });
       await celebrate();
-      toast({
-        title: "Movimiento actualizado",
-        description: "Los cambios se han guardado correctamente.",
-      });
+      toast({ title: "Movimiento actualizado", description: "Los cambios se guardaron." });
       onClose();
     } catch (error) {
-      toast({
-        title: "Error: " + error,
-        description: "No se pudo actualizar el movimiento.",
-        variant: "destructive",
-      });
+      console.error(error);
+      toast({ title: "No se actualizó el movimiento", description: "Revisa tu conexión e inténtalo de nuevo.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!transaction) return;
     setIsDeleting(true);
     try {
       await deleteTransaction(transaction.id);
-      toast({
-        title: "Movimiento eliminado",
-        description: "El registro ha sido eliminado permanentemente.",
-      });
+      toast({ title: "Movimiento eliminado" });
       onClose();
     } catch (error) {
-      toast({
-        title: "Error: " + error,
-        description: "No se pudo eliminar el movimiento.",
-        variant: "destructive",
-      });
+      console.error(error);
+      toast({ title: "No se eliminó el movimiento", description: "Revisa tu conexión e inténtalo de nuevo.", variant: "destructive" });
     } finally {
       setIsDeleting(false);
     }
   };
 
-  if (!transaction) return null;
-
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Editar movimiento</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-          <TypeToggle id="edit-type" value={type} onChange={setType} />
-
-          <div className="space-y-2">
-            <Label htmlFor="edit-amount">Monto</Label>
-            <Input
-              id="edit-amount"
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="text-lg font-bold"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="edit-description">Descripción</Label>
-            <Input
-              id="edit-description"
-              placeholder="¿Qué compraste?"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Categoría</Label>
-              <Select
-                value={category}
-                onValueChange={(val) => setCategory(val as TransactionCategory)}
+    <BottomSheet
+      open={isOpen}
+      onOpenChange={(o) => !o && onClose()}
+      title="Editar movimiento"
+      footer={
+        <div className="flex flex-col gap-1.5">
+          <ConfirmButton
+            className="h-11 w-full"
+            onClick={submit}
+            disabled={!dirty || !valid}
+            loading={isSubmitting}
+            loadingText="Guardando…"
+          >
+            {dirty ? "Guardar cambios" : "Sin cambios"}
+          </ConfirmButton>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                disabled={isDeleting || isSubmitting}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(categories).map(
-                    ([key, { label, icon, type }]) => (
-                      <SelectItem key={key} value={key}>
-                        <div className="flex items-center">
-                          {type === "image" ? (
-                            <img
-                              src={icon}
-                              alt=""
-                              className="w-5 h-5 mr-2 rounded-full object-cover"
-                            />
-                          ) : (
-                            <span className="mr-2">{icon}</span>
-                          )}
-                          {label}
-                        </div>
-                      </SelectItem>
-                    ),
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Cuenta</Label>
-              <Select value={accountId} onValueChange={setAccountId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar" />
-                </SelectTrigger>
-                <SelectContent>
-                  {accounts.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>
-                      {acc.name}
-                      {acc.last4 ? ` •••• ${acc.last4}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* <div className="space-y-2">
-            <Label>Fecha</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !date && "text-muted-foreground",
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? (
-                    format(date, "PPP", { locale: es })
-                  ) : (
-                    <span>Seleccionar fecha</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(d) => d && setDate(d)}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div> */}
-
-          {/* -------- */}
-          <div className="space-y-2">
-            <Label>Fecha</Label>
-            <DatePicker date={date} onDateChange={setDate} />
-          </div>
-          <div className="flex flex-col gap-1.5 pt-3">
-            <ConfirmButton
-              type="submit"
-              size="lg"
-              className="w-full"
-              disabled={!dirty}
-              loading={isSubmitting}
-              loadingText="Guardando…"
-            >
-              {dirty ? "Guardar cambios" : "Sin cambios"}
-            </ConfirmButton>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="w-full gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  disabled={isDeleting || isSubmitting}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Eliminar movimiento
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="max-w-[360px] rounded-3xl">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>¿Eliminar este movimiento?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Se eliminará «{description || "sin descripción"}» por{" "}
-                    {formatCurrency(parseFloat(amount || "0"))}. Esta acción no se puede deshacer.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="gap-2 sm:gap-2">
-                  <AlertDialogCancel className="rounded-full">Cancelar</AlertDialogCancel>
-                  <ConfirmButton
-                    variant="destructive"
-                    onClick={handleDelete}
-                    loading={isDeleting}
-                    loadingText="Eliminando…"
-                  >
-                    Eliminar
-                  </ConfirmButton>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+                <Trash2 className="h-4 w-4" />
+                Eliminar movimiento
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="max-w-[360px] rounded-3xl">
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Eliminar este movimiento?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Se eliminará «{transaction.description || "sin descripción"}» por {formatCurrency(Number(transaction.amount))}.
+                  Esta acción no se puede deshacer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="gap-2 sm:gap-2">
+                <AlertDialogCancel className="rounded-full">Cancelar</AlertDialogCancel>
+                <ConfirmButton variant="destructive" onClick={handleDelete} loading={isDeleting} loadingText="Eliminando…">
+                  Eliminar
+                </ConfirmButton>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      }
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+      >
+        <TransactionFields
+          idPrefix="edit-tx"
+          draft={draft}
+          onChange={(patch) => setDraft((d) => (d ? { ...d, ...patch } : d))}
+          touched
+        />
+        <button type="submit" className="hidden" aria-hidden="true" tabIndex={-1} />
+      </form>
+    </BottomSheet>
   );
 };
 

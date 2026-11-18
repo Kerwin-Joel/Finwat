@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useEffect, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { Transaction } from "../types/transaction";
 import useCategoryStore from "../stores/categoryStore";
@@ -6,6 +6,8 @@ import { formatCurrency } from "../utils/formatCurrency";
 import { formatDate } from "../utils/dateUtils";
 import WhatsAppIcon from "@/assets/WhatsAppIcon";
 import { EASE_OUT } from "@/lib/motion";
+import useTransactionStore from "../stores/transactionStore";
+import { WaveSweep } from "@/components/ui/wave-sweep";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -23,10 +25,23 @@ const TransactionItem = forwardRef<HTMLButtonElement, TransactionItemProps>(({
   const reduce = useReducedMotion();
   const categoryData = getCategory(transaction.category);
   const isIncome = transaction.type === "income";
+  // Fila recién agregada/editada: la onda pasa por ella una vez y se lleva a la vista
+  const highlighted = useTransactionStore((s) => s.highlightId === transaction.id);
+  const clearHighlight = useTransactionStore((s) => s.clearHighlight);
+  const localRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (!highlighted) return;
+    const t = setTimeout(() => localRef.current?.scrollIntoView({ block: "nearest", behavior: reduce ? "auto" : "smooth" }), 250);
+    return () => clearTimeout(t);
+  }, [highlighted, reduce]);
 
   return (
     <motion.button
-      ref={ref}
+      ref={(el) => {
+        localRef.current = el;
+        if (typeof ref === "function") ref(el);
+        else if (ref) ref.current = el;
+      }}
       type="button"
       layout={reduce ? false : "position"}
       initial={reduce ? false : { opacity: 0, y: 6 }}
@@ -38,9 +53,10 @@ const TransactionItem = forwardRef<HTMLButtonElement, TransactionItemProps>(({
         ease: EASE_OUT,
         layout: { type: "spring", stiffness: 260, damping: 32, mass: 0.9, delay: 0 },
       }}
-      className="flex w-full items-center justify-between gap-3 rounded-xl px-2.5 py-3 text-left transition-colors duration-200 hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:bg-accent"
+      className="relative isolate flex w-full items-center justify-between gap-3 overflow-hidden rounded-xl px-2.5 py-3 text-left transition-colors duration-200 hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:bg-accent"
       onClick={() => onClick?.(transaction)}
     >
+      {highlighted && <WaveSweep delay={450} onDone={clearHighlight} />}
       <div className="flex min-w-0 items-center gap-3">
         <div
           className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl text-lg"

@@ -75,6 +75,32 @@ export const investmentService = {
     };
   },
 
+  /** Cuotas de varias líneas (para el detalle de Esperado/Cobrado/Pendiente/Vencido/Rendimiento) */
+  async getPortfolioSchedules(lineIds: string[]): Promise<{
+    schedules: InterestSchedule[];
+    contributions: Pick<Contribution, "id" | "line_id" | "return_type" | "amount_cents" | "contributed_at" | "status">[];
+  }> {
+    if (lineIds.length === 0) return { schedules: [], contributions: [] };
+    const [sch, con] = await Promise.all([
+      supabase
+        .from("interest_schedules_view")
+        .select("*")
+        .in("line_id", lineIds)
+        .neq("status", "anulada")
+        .order("due_date", { ascending: true }),
+      supabase
+        .from("contributions")
+        .select("id, line_id, return_type, amount_cents, contributed_at, status")
+        .in("line_id", lineIds),
+    ]);
+    if (sch.error) throw new Error(investmentErrorMessage(sch.error));
+    if (con.error) throw new Error(investmentErrorMessage(con.error));
+    return {
+      schedules: (sch.data ?? []) as InterestSchedule[],
+      contributions: (con.data ?? []) as Pick<Contribution, "id" | "line_id" | "return_type" | "amount_cents" | "contributed_at" | "status">[],
+    };
+  },
+
   /** Cambios relevantes de la línea (sin el ruido de cuotas e imputaciones internas) */
   async getAuditLog(lineId: string): Promise<AuditEntry[]> {
     const { data, error } = await supabase

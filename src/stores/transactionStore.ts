@@ -18,6 +18,9 @@ interface TransactionState {
   error: string | null;
   filters: TransactionFilters;
   sortOption: SortOption;
+  /** Movimiento recién creado o editado: su fila muestra la onda una vez */
+  highlightId: string | null;
+  clearHighlight: () => void;
   fetchTransactions: (filters?: TransactionFilters) => Promise<void>;
   addTransaction: (payload: CreateTransactionRequest) => Promise<void>;
   updateTransaction: (
@@ -36,6 +39,8 @@ const useTransactionStore = create<TransactionState>((set, get) => ({
   error: null,
   filters: {},
   sortOption: "DATE_DESC",
+  highlightId: null,
+  clearHighlight: () => set({ highlightId: null }),
 
   fetchTransactions: async (filters) => {
     set({ isLoading: true, error: null });
@@ -53,61 +58,44 @@ const useTransactionStore = create<TransactionState>((set, get) => ({
     }
   },
 
+  // Crear/editar/eliminar no ponen la lista en "cargando" (antes se reemplazaba por
+  // esqueletos y saltaba) y propagan el error: el modal solo celebra si de verdad se guardó.
   addTransaction: async (payload) => {
-    set({ isLoading: true });
     try {
       const newTransaction = await createTransaction(payload);
-      set((state) => {
-        const updated = [newTransaction, ...state.transactions];
-        return {
-          transactions: sortTransactions(updated, state.sortOption),
-          isLoading: false,
-        };
-      });
+      set((state) => ({
+        transactions: sortTransactions([newTransaction, ...state.transactions], state.sortOption),
+        highlightId: newTransaction.id,
+      }));
     } catch (err) {
-      set({
-        error: err instanceof Error ? err.message : "Error al crear movimiento",
-        isLoading: false,
-      });
+      set({ error: err instanceof Error ? err.message : "Error al crear movimiento" });
+      throw err;
     }
   },
 
   updateTransaction: async (id, updates) => {
-    set({ isLoading: true });
     try {
       const updatedTx = await updateTransaction(id, updates);
-      set((state) => {
-        const updatedList = state.transactions.map((t) =>
-          t.id === id ? updatedTx : t,
-        );
-        return {
-          transactions: sortTransactions(updatedList, state.sortOption),
-          isLoading: false,
-        };
-      });
+      set((state) => ({
+        transactions: sortTransactions(
+          state.transactions.map((t) => (t.id === id ? updatedTx : t)),
+          state.sortOption,
+        ),
+        highlightId: id,
+      }));
     } catch (err) {
-      set({
-        error:
-          err instanceof Error ? err.message : "Error al actualizar movimiento",
-        isLoading: false,
-      });
+      set({ error: err instanceof Error ? err.message : "Error al actualizar movimiento" });
+      throw err;
     }
   },
 
   deleteTransaction: async (id) => {
-    set({ isLoading: true });
     try {
       await deleteTransaction(id);
-      set((state) => ({
-        transactions: state.transactions.filter((t) => t.id !== id),
-        isLoading: false,
-      }));
+      set((state) => ({ transactions: state.transactions.filter((t) => t.id !== id) }));
     } catch (err) {
-      set({
-        error:
-          err instanceof Error ? err.message : "Error al eliminar movimiento",
-        isLoading: false,
-      });
+      set({ error: err instanceof Error ? err.message : "Error al eliminar movimiento" });
+      throw err;
     }
   },
 

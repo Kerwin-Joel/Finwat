@@ -1,220 +1,117 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import TypeToggle from "@/components/transactions/TypeToggle";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { DatePicker } from "./ui/calendar";
+import BottomSheet from "@/components/investments/BottomSheet";
+import TransactionFields from "@/components/transactions/TransactionFields";
+import { draftErrors, type TransactionDraft } from "@/utils/transactionDraft";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { useToast } from "../hooks/use-toast";
 import useTransactionStore from "../stores/transactionStore";
 import useAccountStore from "../stores/accountStore";
-import useCategoryStore from "../stores/categoryStore";
-import type {
-  TransactionCategory,
-  TransactionType,
-} from "../types/transaction";
-import { ConfirmButton } from "@/components/ui/confirm-button";
 import { celebrate } from "@/lib/celebrate";
+import { formatCurrency } from "@/utils/formatCurrency";
 
-// shadcn utils alias workaround if not using `@/lib/utils`
+// Nuevo movimiento con el mismo estilo que los formularios de Inversiones (hoja inferior en
+// el celular, modal centrado en escritorio). Al guardar: onda en el botón, estallido y la
+// fila nueva de la lista recibe su propia onda (highlightId en el store).
 
 interface AddTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
-  isOpen,
-  onClose,
-}) => {
+const today = () => format(new Date(), "yyyy-MM-dd");
+
+const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClose }) => {
   const { addTransaction } = useTransactionStore();
   const { accounts } = useAccountStore();
-  const { categories } = useCategoryStore();
   const { toast } = useToast();
 
-  const [type, setType] = useState<TransactionType>("expense");
-  const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<TransactionCategory>("OTROS");
-  const [pickedAccountId, setAccountId] = useState("");
-  // Si no eligió ninguna (o las cuentas cargaron después de montar), usar la principal
-  const accountId = pickedAccountId || accounts.find((a) => a.is_default)?.id || accounts[0]?.id || "";
-  const [date, setDate] = useState<Date>(new Date());
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [draft, setDraft] = useState<TransactionDraft>({
+    type: "expense",
+    amount: "",
+    description: "",
+    category: "OTROS",
+    accountId: "",
+    date: today(),
+  });
+  // Si no eligió ninguna (o las cuentas cargaron después), se usa la principal
+  const accountId = draft.accountId || accounts.find((a) => a.is_default)?.id || accounts[0]?.id || "";
+  const full: TransactionDraft = { ...draft, accountId };
+  const [touched, setTouched] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!amount || !description || !accountId) return;
+  const amountNumber = Number(draft.amount.replace(",", "."));
+  const valid = !Object.values(draftErrors(full, true)).some(Boolean);
 
-    setIsSubmitting(true);
+  const reset = () => {
+    setDraft((d) => ({ ...d, amount: "", description: "", date: today() }));
+    setTouched(false);
+  };
+
+  const close = (open: boolean) => {
+    if (open) return;
+    onClose();
+    if (!saving) reset();
+  };
+
+  const submit = async () => {
+    setTouched(true);
+    if (!valid || saving) return;
+    setSaving(true);
     try {
       await addTransaction({
-        type,
-        amount: parseFloat(amount),
-        description,
-        category,
+        type: draft.type,
+        amount: amountNumber,
+        description: draft.description.trim(),
+        category: draft.category,
         account_id: accountId,
-        transaction_date: format(date, "yyyy-MM-dd"),
+        transaction_date: draft.date,
       });
       await celebrate();
       toast({
         title: "Movimiento registrado",
-        // description: `${type === "income" ? "Ingreso" : "Gasto"} de S/. ${amount} guardado.`,
-        description: `${type === "income" ? "Ingreso" : "Gasto"} de S/. ${amount} guardado.`,
+        description: `${draft.type === "income" ? "Ingreso" : "Gasto"} de ${formatCurrency(amountNumber)} guardado.`,
       });
       onClose();
-      // Reset form
-      setAmount("");
-      setDescription("");
+      reset();
     } catch (error) {
-      console.log(error);
-      toast({
-        title: "Error",
-        description: "No se pudo guardar el movimiento.",
-        variant: "destructive",
-      });
+      console.error(error);
+      toast({ title: "No se guardó el movimiento", description: "Revisa tu conexión e inténtalo de nuevo.", variant: "destructive" });
     } finally {
-      setIsSubmitting(false);
+      setSaving(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Nuevo Movimiento</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-          <TypeToggle id="add-type" value={type} onChange={setType} />
-
-          <div className="space-y-2">
-            <Label htmlFor="amount">Monto</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="text-lg font-bold"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Descripción</Label>
-            <Input
-              id="description"
-              placeholder={
-                type === "expense"
-                  ? "💸 ¿A dónde se fue tu platita?"
-                  : "🤑 ¿De dónde cayó este billuyo?"
-              }
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Categoría</Label>
-              <Select
-                value={category}
-                onValueChange={(val) => setCategory(val as TransactionCategory)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(categories).map(
-                    ([key, { label, icon, type }]) => (
-                      <SelectItem key={key} value={key}>
-                        <div className="flex items-center">
-                          {type === "image" ? (
-                            <img
-                              src={icon}
-                              alt=""
-                              className="w-5 h-5 mr-2 rounded-full object-cover"
-                            />
-                          ) : (
-                            <span className="mr-2">{icon}</span>
-                          )}
-                          {label}
-                        </div>
-                      </SelectItem>
-                    ),
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Cuenta</Label>
-              <Select value={accountId} onValueChange={setAccountId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar" />
-                </SelectTrigger>
-                <SelectContent>
-                  {accounts.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>
-                      {acc.name}
-                      {acc.last4 ? ` •••• ${acc.last4}` : ""}
-                      {acc.is_default ? " · principal" : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* <div className="space-y-2">
-            <Label>Fecha</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !date && "text-muted-foreground",
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? (
-                    format(date, "PPP", { locale: es })
-                  ) : (
-                    <span>Seleccionar fecha</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(d) => d && setDate(d)}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div> */}
-          {/* -------- */}
-          <div className="space-y-2">
-            <Label>Fecha</Label>
-            <DatePicker date={date} onDateChange={setDate} />
-          </div>
-          <ConfirmButton type="submit" className="w-full" loading={isSubmitting} loadingText="Guardando…">
-            Guardar y Confirmar
-          </ConfirmButton>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <BottomSheet
+      open={isOpen}
+      onOpenChange={close}
+      title="Nuevo movimiento"
+      description="Regístralo aquí o escríbelo por WhatsApp."
+      footer={
+        <ConfirmButton className="h-11 w-full" onClick={submit} loading={saving} loadingText="Guardando…">
+          {Number.isFinite(amountNumber) && amountNumber > 0
+            ? `Registrar ${draft.type === "income" ? "ingreso" : "gasto"} de ${formatCurrency(amountNumber)}`
+            : "Registrar movimiento"}
+        </ConfirmButton>
+      }
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+      >
+        <TransactionFields
+          idPrefix="add-tx"
+          draft={full}
+          onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))}
+          touched={touched}
+          autoFocus
+        />
+        <button type="submit" className="hidden" aria-hidden="true" tabIndex={-1} />
+      </form>
+    </BottomSheet>
   );
 };
 

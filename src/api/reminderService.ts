@@ -43,7 +43,17 @@ export const reminderService = {
     if (error) throw error;
   },
 
-  async update(id: string, dto: Partial<CreateReminderDTO>): Promise<void> {
+  // null limpia el campo (p. ej. quitar la hora o el monto); last_notified_at: null hace
+  // que el bot vuelva a avisar si cambió la fecha, la hora o el aviso.
+  async update(
+    id: string,
+    dto: Partial<Omit<CreateReminderDTO, "amount" | "due_time" | "notes">> & {
+      amount?: number | null;
+      due_time?: string | null;
+      notes?: string | null;
+      last_notified_at?: string | null;
+    },
+  ): Promise<void> {
     const { error } = await supabase
       .from("reminders")
       .update({ ...dto, updated_at: new Date().toISOString() })
