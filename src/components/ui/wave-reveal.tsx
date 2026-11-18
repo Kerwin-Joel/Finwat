@@ -16,7 +16,7 @@ import {
 // las pantallas de éxito (aporte registrado, pago registrado, correo enviado…).
 // Con movimiento reducido muestra el contenido directo.
 
-const DURATION = 1100
+const DURATION = 1300
 
 const WaveReveal = ({
   children,
@@ -40,7 +40,7 @@ const WaveReveal = ({
     const ctx = canvas?.getContext("2d")
     if (!canvas || !ctx || !content) return
     const size = fitCanvas(canvas, ctx)
-    const particles = makeParticles(36)
+    const particles = makeParticles(12)
     let raf = 0
     let start = 0
 
@@ -49,18 +49,18 @@ const WaveReveal = ({
       const p = Math.max(0, Math.min(1, (now - start) / DURATION))
       const t = (now - start) / 1000
       const { width: w, height: h } = size
-      const amp = Math.min(40, h * 0.22)
+      const amp = Math.min(22, h * 0.14)
       const y = h + amp - easeInOutCubic(p) * (h + amp * 2.6)
 
       // Lo que ya cruzó la onda queda visible
       const reveal = Math.max(0, Math.min(100, (y / h) * 100))
       content.style.clipPath = `inset(${reveal}% 0 0 0)`
-      content.style.opacity = String(Math.min(1, p * 3))
+      content.style.opacity = String(Math.min(1, p * 1.8))
 
       ctx.clearRect(0, 0, w, h)
       const fade = p > 0.85 ? (1 - p) / 0.15 : 1
       const wake = ctx.createLinearGradient(0, y, 0, y + h * 0.6)
-      wake.addColorStop(0, `rgba(0,122,255,${0.14 * fade})`)
+      wake.addColorStop(0, `rgba(0,122,255,${0.07 * fade})`)
       wake.addColorStop(1, "rgba(0,122,255,0)")
       ctx.fillStyle = wake
       traceFront(ctx, "vertical", y, w, amp, t)
@@ -73,14 +73,14 @@ const WaveReveal = ({
         (shift) => traceFront(ctx, "vertical", y + shift, w, amp, t),
         (a) => rimGradient(ctx, 0, 0, w, 0, t, a, WAVE_PALETTE),
         fade,
-        0.8,
+        0.55,
       )
       for (const pt of particles) {
         const life = (p - pt.delay) / 0.7
         if (life <= 0 || life >= 1) continue
         const px = w / 2 + Math.cos(pt.angle) * life * pt.speed * w * 0.55
         const py = h + Math.sin(pt.angle) * life * pt.speed * h * 1.2
-        ctx.globalAlpha = (1 - life) * fade
+        ctx.globalAlpha = (1 - life) * fade * 0.5
         ctx.fillStyle = pt.color
         ctx.beginPath()
         ctx.arc(px, py, pt.size, 0, Math.PI * 2)

@@ -11,7 +11,7 @@ import { WAVE_PALETTE_LIGHT, easeInOutCubic, fitCanvas, makeParticles, rimGradie
 //
 //   <ConfirmButton loading={saving} loadingText="Guardando…" onClick={save}>Guardar</ConfirmButton>
 
-const SWEEP = 1.35 // s por pasada
+const SWEEP = 2 // s por pasada (lenta y suave)
 
 const ButtonWave = () => {
   const ref = React.useRef<HTMLCanvasElement>(null)
@@ -26,7 +26,7 @@ const ButtonWave = () => {
     })
     ro.observe(canvas)
 
-    let particles = makeParticles(14, 0, 1.4, WAVE_PALETTE_LIGHT)
+    let particles = makeParticles(5, 0, 1.1, WAVE_PALETTE_LIGHT)
     let lastCycle = -1
     const start = performance.now()
     let raf = 0
@@ -38,18 +38,18 @@ const ButtonWave = () => {
       const p = (t % SWEEP) / SWEEP
       if (cycle !== lastCycle) {
         lastCycle = cycle
-        particles = makeParticles(14, 0, 1.4, WAVE_PALETTE_LIGHT)
+        particles = makeParticles(5, 0, 1.1, WAVE_PALETTE_LIGHT)
       }
       ctx.clearRect(0, 0, w, h)
 
-      const amp = Math.min(18, h * 0.42)
+      const amp = Math.min(10, h * 0.25)
       const x = -amp + easeInOutCubic(p) * (w + amp * 2.4)
       const fade = p < 0.08 ? p / 0.08 : p > 0.9 ? (1 - p) / 0.1 : 1
 
       // Estela: lo que ya cruzó la onda queda iluminado
       const wake = ctx.createLinearGradient(0, 0, x, 0)
       wake.addColorStop(0, "rgba(126,196,255,0)")
-      wake.addColorStop(1, `rgba(214,230,255,${0.3 * fade})`)
+      wake.addColorStop(1, `rgba(214,230,255,${0.14 * fade})`)
       ctx.fillStyle = wake
       traceFront(ctx, "horizontal", x, h, amp, t)
       ctx.lineTo(0, h)
@@ -62,8 +62,8 @@ const ButtonWave = () => {
         (shift) => traceFront(ctx, "horizontal", x - shift, h, amp, t),
         (a) => rimGradient(ctx, 0, 0, 0, h, t, a, WAVE_PALETTE_LIGHT),
         fade,
-        Math.max(0.35, h / 64),
-        0.8,
+        Math.max(0.3, h / 80),
+        0.45,
       )
 
       for (const pt of particles) {
@@ -71,7 +71,7 @@ const ButtonWave = () => {
         if (life <= 0 || life >= 1) continue
         const px = x - 4 + Math.cos(pt.angle) * life * pt.speed * 46
         const py = h / 2 + Math.sin(pt.angle) * life * pt.speed * h * 0.9
-        ctx.globalAlpha = (1 - life) * fade
+        ctx.globalAlpha = (1 - life) * fade * 0.6
         ctx.fillStyle = pt.color
         ctx.beginPath()
         ctx.arc(px, py, pt.size * 0.9, 0, Math.PI * 2)
@@ -95,7 +95,7 @@ const ButtonWave = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.25 }}
+      transition={{ duration: 0.4 }}
     />
   )
 }
@@ -146,8 +146,8 @@ const ConfirmButton = React.forwardRef<HTMLButtonElement, ConfirmButtonProps>(
             className="col-start-1 row-start-1 inline-flex items-center gap-2"
             aria-hidden={loading || undefined}
             initial={false}
-            animate={{ opacity: loading ? 0 : 1, y: loading && !reduce ? -6 : 0 }}
-            transition={{ duration: 0.2 }}
+            animate={{ opacity: loading ? 0 : 1, y: loading && !reduce ? -3 : 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
             {children}
           </motion.span>
@@ -155,8 +155,8 @@ const ConfirmButton = React.forwardRef<HTMLButtonElement, ConfirmButtonProps>(
             className="col-start-1 row-start-1 inline-flex items-center gap-2"
             aria-hidden={!loading || undefined}
             initial={false}
-            animate={{ opacity: loading ? 1 : 0, y: loading || reduce ? 0 : 6 }}
-            transition={{ duration: 0.2 }}
+            animate={{ opacity: loading ? 1 : 0, y: loading || reduce ? 0 : 3 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
             {busyLabel}
           </motion.span>

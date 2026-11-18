@@ -7,9 +7,9 @@
 // igual percibe que la operación ocurrió. Luego lanza el estallido y sigue el flujo.
 import { WAVE_PALETTE, WAVE_PALETTE_LIGHT, easeOutCubic, makeParticles, prefersReducedMotion, rimGradient } from "./waves";
 
-const DURATION = 1200;
-const REACH = 170; // px que crece el anillo
-const MIN_WAVE_MS = 850;
+const DURATION = 1400;
+const REACH = 80; // px que crece el anillo (contenido, no invade la pantalla)
+const MIN_WAVE_MS = 700;
 
 // Último ConfirmButton que empezó a cargar: celebrate() sin argumentos sale de ahí.
 let lastEl: HTMLElement | null = null;
@@ -73,14 +73,14 @@ const burst = (rect: DOMRect) => {
 
   const cx = rect.left + rect.width / 2;
   const cy = rect.top + rect.height / 2;
-  const particles = makeParticles(64, 0, Math.PI * 2);
+  const particles = makeParticles(20, 0, Math.PI * 2);
   const start = performance.now();
 
   // Un anillo: el contorno del botón crece hacia afuera y se desvanece
   const ring = (p: number, t: number, strength: number) => {
     if (p <= 0 || p >= 1) return;
     const grow = easeOutCubic(p) * REACH;
-    const fade = Math.pow(1 - p, 1.3) * strength;
+    const fade = Math.pow(1 - p, 1.6) * strength;
     const x = rect.left - grow;
     const y = rect.top - grow * 0.7;
     const w = rect.width + grow * 2;
@@ -88,10 +88,10 @@ const burst = (rect: DOMRect) => {
     const radius = rect.height / 2 + grow * 0.7;
     ctx.lineJoin = "round";
     const layers: [number, number, string[]][] = [
-      [34, 0.22, WAVE_PALETTE],
-      [18, 0.42, WAVE_PALETTE],
-      [8, 0.8, WAVE_PALETTE],
-      [3, 1, WAVE_PALETTE_LIGHT],
+      [22, 0.08, WAVE_PALETTE],
+      [12, 0.16, WAVE_PALETTE],
+      [5, 0.32, WAVE_PALETTE],
+      [1.5, 0.55, WAVE_PALETTE_LIGHT],
     ];
     for (const [lw, a, pal] of layers) {
       ctx.lineWidth = lw * (1 - p * 0.45);
@@ -109,28 +109,28 @@ const burst = (rect: DOMRect) => {
     // Destello al centro, solo al inicio
     if (p < 0.3) {
       const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, rect.width * 0.75);
-      glow.addColorStop(0, `rgba(0,122,255,${0.32 * (1 - p / 0.3)})`);
+      glow.addColorStop(0, `rgba(0,122,255,${0.12 * (1 - p / 0.3)})`);
       glow.addColorStop(1, "rgba(0,122,255,0)");
       ctx.fillStyle = glow;
       ctx.fillRect(cx - rect.width, cy - rect.width, rect.width * 2, rect.width * 2);
     }
 
     ring(p / 0.9, t, 1);
-    ring((p - 0.14) / 0.86, t, 0.55); // segundo anillo, más suave
+    ring((p - 0.18) / 0.82, t, 0.3); // eco del anillo, muy tenue
 
     // Partículas desde el borde del botón hacia afuera
     for (const pt of particles) {
       const life = (p - pt.delay * 0.6) / 0.85;
       if (life <= 0 || life >= 1) continue;
-      const dist = easeOutCubic(life) * pt.speed * REACH * 1.3;
+      const dist = easeOutCubic(life) * pt.speed * REACH * 1.1;
       const ox = Math.cos(pt.angle) * (rect.width / 2);
       const oy = Math.sin(pt.angle) * (rect.height / 2);
       const px = cx + ox + Math.cos(pt.angle) * dist;
       const py = cy + oy + Math.sin(pt.angle) * dist + life * life * 18;
-      ctx.globalAlpha = (1 - life) * (0.6 + 0.4 * Math.sin(t * pt.twinkle + pt.sway));
+      ctx.globalAlpha = (1 - life) * (0.6 + 0.4 * Math.sin(t * pt.twinkle + pt.sway)) * 0.5;
       ctx.fillStyle = pt.color;
       ctx.beginPath();
-      ctx.arc(px, py, pt.size * 1.35, 0, Math.PI * 2);
+      ctx.arc(px, py, pt.size, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;

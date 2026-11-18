@@ -17,8 +17,8 @@ import {
 // que siempre se lea (contraste AA aunque la onda pase detrás). Anuncia el estado a lectores
 // de pantalla (role=status, aria-busy) y con movimiento reducido queda quieto.
 
-const CYCLE = 2.3; // s por pasada
-const PARTICLES = 46;
+const CYCLE = 3; // s por pasada (lenta y suave)
+const PARTICLES = 20;
 
 const WaveLoader = ({
   label,
@@ -63,7 +63,7 @@ const WaveLoader = ({
     const frame = (t: number, p: number) => {
       const { width, height: h } = size;
       ctx.clearRect(0, 0, width, h);
-      const amp = Math.min(46, h * 0.3);
+      const amp = Math.min(30, h * 0.2);
       const y =
         h + amp * 0.2 - easeInOutCubic(Math.min(1, p / 0.9)) * (h + amp * 1.6);
       const fade =
@@ -71,7 +71,7 @@ const WaveLoader = ({
 
       // Estela: lo que ya cruzó la onda queda teñido suavemente
       const wake = ctx.createLinearGradient(0, y, 0, h);
-      wake.addColorStop(0, `rgba(0,122,255,${0.16 * fade})`);
+      wake.addColorStop(0, `rgba(0,122,255,${0.08 * fade})`);
       wake.addColorStop(1, "rgba(0,122,255,0)");
       ctx.fillStyle = wake;
       traceFront(ctx, "vertical", y, width, amp, t);
@@ -100,7 +100,8 @@ const WaveLoader = ({
         ctx.globalAlpha =
           (1 - life) *
           (0.55 + 0.45 * Math.sin(t * pt.twinkle + pt.sway)) *
-          fade;
+          fade *
+          0.55;
         ctx.fillStyle = pt.color;
         ctx.beginPath();
         ctx.arc(px, py, pt.size, 0, Math.PI * 2);

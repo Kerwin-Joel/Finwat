@@ -11,7 +11,7 @@ export const WAVE_PALETTE = ["#00aaff", "#0066ff", "#7cc4ff", "#3d5afe", "#00d4f
 export const WAVE_PALETTE_LIGHT = ["#ffffff", "#a8ccff", "#7fe3ff", "#d6e6ff", "#00d4ff", "#9ec2ff", "#eaf2ff"];
 
 export const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3.2);
-export const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+export const easeInOutCubic = (t: number) => -(Math.cos(Math.PI * t) - 1) / 2;
 
 const hexAlpha = (a: number) =>
   Math.round(Math.max(0, Math.min(1, a)) * 255)
@@ -71,15 +71,15 @@ export const strokeRim = (
   gradient: (alpha: number) => CanvasGradient,
   fade: number,
   scale = 1,
-  hairline = 0.9,
+  hairline = 0.55,
 ) => {
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   const layers: [number, number][] = [
-    [60, 0.14],
-    [34, 0.26],
-    [16, 0.5],
-    [6, 0.85],
+    [42, 0.07],
+    [24, 0.13],
+    [11, 0.26],
+    [4, 0.5],
   ];
   for (const [w, a] of layers) {
     ctx.lineWidth = w * scale;
