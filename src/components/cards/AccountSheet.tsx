@@ -262,16 +262,16 @@ const AccountSheet = ({
               </p>
             ) : (
               <>
-                <Button variant="outline" className="w-full" onClick={doMakeDefault} disabled={saving}>
+                <ConfirmButton variant="outline" className="w-full" onClick={doMakeDefault} disabled={saving} loadingText="Guardando…">
                   <Star className="h-4 w-4" /> Hacer cuenta principal
-                </Button>
+                </ConfirmButton>
                 {confirmArchive ? (
                   <div className="rounded-2xl bg-destructive/10 p-3 text-[13px] text-destructive">
                     <p>Se ocultará de la app. Sus movimientos se conservan y siguen contando en tu historial.</p>
                     <div className="mt-2 flex gap-2">
-                      <Button size="sm" variant="destructive" onClick={doArchive} disabled={saving}>
+                      <ConfirmButton size="sm" variant="destructive" onClick={doArchive} disabled={saving} loadingText="Archivando…">
                         Archivar
-                      </Button>
+                      </ConfirmButton>
                       <Button size="sm" variant="ghost" onClick={() => setConfirmArchive(false)}>
                         Cancelar
                       </Button>

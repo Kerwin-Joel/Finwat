@@ -30,7 +30,6 @@ import type {
 } from "../types/transaction";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -297,12 +296,14 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
                 </AlertDialogHeader>
                 <AlertDialogFooter className="gap-2 sm:gap-2">
                   <AlertDialogCancel className="rounded-full">Cancelar</AlertDialogCancel>
-                  <AlertDialogAction
+                  <ConfirmButton
+                    variant="destructive"
                     onClick={handleDelete}
-                    className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    loading={isDeleting}
+                    loadingText="Eliminando…"
                   >
                     Eliminar
-                  </AlertDialogAction>
+                  </ConfirmButton>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

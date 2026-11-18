@@ -9,7 +9,7 @@ import { WAVE_PALETTE, WAVE_PALETTE_LIGHT, easeOutCubic, makeParticles, prefersR
 
 const DURATION = 1400;
 const REACH = 80; // px que crece el anillo (contenido, no invade la pantalla)
-const MIN_WAVE_MS = 700;
+const MIN_WAVE_MS = 900;
 
 // Último ConfirmButton que empezó a cargar: celebrate() sin argumentos sale de ahí.
 let lastEl: HTMLElement | null = null;

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
-import { Button } from "./ui/button";
 import { supabase } from "../lib/supabase";
 import useAuthStore from "../stores/authStore";
 import { useToast } from "../hooks/use-toast";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 const CATEGORIES = [
   { key: "ALIMENTACION", label: "Alimentación", icon: "🍔" },
@@ -105,13 +105,9 @@ const BudgetEditor: React.FC<BudgetEditorProps> = ({
             </div>
           ))}
         </div>
-        <Button
-          onClick={handleSave}
-          className="w-full mt-2"
-          disabled={isSaving}
-        >
-          {isSaving ? "Guardando..." : "Guardar presupuestos"}
-        </Button>
+        <ConfirmButton onClick={handleSave} className="w-full mt-2" loading={isSaving} loadingText="Guardando…">
+          Guardar presupuestos
+        </ConfirmButton>
       </DialogContent>
     </Dialog>
   );

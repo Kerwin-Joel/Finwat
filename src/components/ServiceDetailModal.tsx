@@ -1,5 +1,4 @@
 import { Check, Clock, User } from 'lucide-react';
-import { Button } from './ui/button';
 import {
     Sheet,
     SheetContent,
@@ -13,6 +12,7 @@ import { formatCurrency } from '../utils/formatCurrency';
 import { useToast } from '../hooks/use-toast';
 import useServicesStore from '../stores/servicesStore';
 import useAuthStore from '../stores/authStore';
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 interface ServiceDetailModalProps {
     service: FinancialService | null;
@@ -108,9 +108,9 @@ const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({ service, onClos
                                 {service.price ? formatCurrency(service.price) : 'Gratuito'}
                             </span>
                         </div>
-                        <Button onClick={handleRequest} className="w-2/3" size="lg">
+                        <ConfirmButton onClick={handleRequest} className="w-2/3" size="lg" loadingText="Enviando…">
                             Solicitar Servicio
-                        </Button>
+                        </ConfirmButton>
                     </div>
                 </SheetFooter>
             </SheetContent>

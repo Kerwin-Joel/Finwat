@@ -505,9 +505,16 @@ const PaymentSheet = ({
                           : `${formatCents(manualAllocations.rest, summary.currency)} quedan como saldo a favor`
                         : "Todo asignado"}
                   </p>
-                  <Button variant="outline" className="h-11 w-full" onClick={runPreview} disabled={loadingPreview || manualAllocations.rest < 0}>
+                  <ConfirmButton
+                    variant="outline"
+                    className="h-11 w-full"
+                    onClick={runPreview}
+                    disabled={manualAllocations.rest < 0}
+                    loading={loadingPreview}
+                    loadingText="Validando…"
+                  >
                     Validar imputación
-                  </Button>
+                  </ConfirmButton>
                 </div>
               ) : null}
 

@@ -72,6 +72,8 @@ export const strokeRim = (
   fade: number,
   scale = 1,
   hairline = 0.55,
+  /** Multiplica la opacidad de las capas (1 = estándar suave) */
+  intensity = 1,
 ) => {
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
@@ -83,7 +85,7 @@ export const strokeRim = (
   ];
   for (const [w, a] of layers) {
     ctx.lineWidth = w * scale;
-    ctx.strokeStyle = gradient(a * fade);
+    ctx.strokeStyle = gradient(Math.min(1, a * fade * intensity));
     draw(w * scale * 0.2);
     ctx.stroke();
   }

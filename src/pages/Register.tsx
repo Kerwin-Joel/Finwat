@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Loader2, MailCheck } from "lucide-react";
+import { AlertCircle, MailCheck } from "lucide-react";
 import useAuthStore from "../stores/authStore";
 import { Button } from "../components/ui/button";
 import { useToast } from "../hooks/use-toast";
@@ -128,9 +128,9 @@ const Register = () => {
               <Button size="lg" className="w-full" onClick={() => navigate("/login?ingresar")}>
                 Ir a iniciar sesión
               </Button>
-              <Button size="lg" variant="ghost" className="w-full" onClick={handleResend} disabled={isResending}>
-                {isResending ? <Loader2 className="h-4 w-4 animate-spin" aria-label="Reenviando" /> : "Reenviar correo"}
-              </Button>
+              <ConfirmButton size="lg" variant="ghost" className="w-full" onClick={handleResend} loading={isResending} loadingText="Reenviando…">
+                Reenviar correo
+              </ConfirmButton>
             </div>
           </motion.div>
         ) : (

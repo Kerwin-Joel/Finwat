@@ -24,6 +24,7 @@ import useAuthStore from "../stores/authStore";
 import { reminderService } from "../api/reminderService";
 import type { Reminder } from "../types/reminder";
 import AddReminderModal from "@/components/AddReminderModal";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 const fadeUp = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 
@@ -184,22 +185,24 @@ const Reminders = () => {
                 </span>
                 {reminder.status === "pending" && (
                   <div className="flex gap-1">
-                    <Button
+                    <ConfirmButton
                       size="sm"
                       variant="ghost"
                       className="h-7 w-7 p-0 text-green-500 hover:text-green-400"
                       onClick={() => handleComplete(reminder.id)}
+                      aria-label="Marcar como completado"
                     >
                       <CheckCircle2 size={15} />
-                    </Button>
-                    <Button
+                    </ConfirmButton>
+                    <ConfirmButton
                       size="sm"
                       variant="ghost"
                       className="h-7 w-7 p-0 text-red-400 hover:text-red-300"
                       onClick={() => handleDelete(reminder.id)}
+                      aria-label="Eliminar recordatorio"
                     >
                       <Trash2 size={15} />
-                    </Button>
+                    </ConfirmButton>
                   </div>
                 )}
               </div>
@@ -353,14 +356,15 @@ const Reminders = () => {
                             {r.amount && ` · ${formatCurrency(r.amount)}`}
                           </p>
                         </div>
-                        <Button
+                        <ConfirmButton
                           size="sm"
                           variant="ghost"
                           className="h-7 w-7 p-0 text-red-400"
                           onClick={() => handleDelete(r.id)}
+                          aria-label="Eliminar recordatorio"
                         >
                           <Trash2 size={13} />
-                        </Button>
+                        </ConfirmButton>
                       </div>
                     </CardContent>
                   </Card>

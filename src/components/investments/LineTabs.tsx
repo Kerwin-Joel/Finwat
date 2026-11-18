@@ -547,9 +547,9 @@ export const PaymentsTab = ({
               {p.void_reason && <p className="mt-1 text-[11px] text-muted-foreground">Anulado: {p.void_reason}</p>}
               <div className="mt-2 flex gap-2">
                 {p.voucher_path && (
-                  <Button variant="outline" size="sm" className="h-11 gap-1" onClick={() => openVoucher(p.voucher_path!)}>
+                  <ConfirmButton variant="outline" size="sm" className="h-11 gap-1" onClick={() => openVoucher(p.voucher_path!)} loadingText="Abriendo…">
                     <FileImage className="h-4 w-4" /> Voucher
-                  </Button>
+                  </ConfirmButton>
                 )}
                 {!anulado && p.recon_status !== "confirmado" && (
                   <Button variant="ghost" size="sm" className="h-11 gap-1 text-muted-foreground hover:text-destructive" onClick={() => onVoid(p)}>
@@ -733,9 +733,9 @@ export const SettingsTab = ({
           <>
             <p className="text-xs text-muted-foreground">Ya no hay capital ni intereses pendientes. Cerrarla la archiva.</p>
             <Textarea rows={2} placeholder="Motivo (opcional)" value={closeReason} onChange={(e) => setCloseReason(e.target.value)} aria-label="Motivo del cierre" />
-            <Button variant="outline" className="h-11 w-full" onClick={closeLine}>
+            <ConfirmButton variant="outline" className="h-11 w-full" onClick={closeLine} loadingText="Cerrando…">
               Cerrar y archivar
-            </Button>
+            </ConfirmButton>
           </>
         ) : (
           <p className="text-xs text-muted-foreground">

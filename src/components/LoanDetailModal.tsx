@@ -209,14 +209,15 @@ const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
                 >
                   <Edit2 size={13} />
                 </Button>
-                <Button
+                <ConfirmButton
                   size="sm"
                   variant="ghost"
                   className="h-7 w-7 p-0 text-red-400"
                   onClick={handleDelete}
+                  aria-label="Eliminar préstamo"
                 >
                   <Trash2 size={13} />
-                </Button>
+                </ConfirmButton>
               </div>
             </div>
 

@@ -146,15 +146,16 @@ const ProfilePhotoModal: React.FC<ProfilePhotoModalProps> = ({ isOpen, onClose }
                                 Seleccionar Imagen
                             </Button>
                             {previewUrl && (
-                                <Button
+                                <ConfirmButton
                                     type="button"
                                     variant="destructive"
                                     onClick={handleRemove}
                                     disabled={isLoading}
+                                    loadingText="Eliminando…"
                                 >
-                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <Trash2 className="h-4 w-4" />
                                     Eliminar
-                                </Button>
+                                </ConfirmButton>
                             )}
                         </div>
 

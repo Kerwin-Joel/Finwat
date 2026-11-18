@@ -132,14 +132,17 @@ const Login = () => {
               <div>
                 <p>{loginError}</p>
                 {needsConfirmation && (
-                  <button
+                  <ConfirmButton
                     type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
                     onClick={handleResend}
-                    disabled={isResending}
-                    className="mt-1 font-semibold underline-offset-2 hover:underline disabled:opacity-50"
+                    loading={isResending}
+                    loadingText="Reenviando…"
                   >
-                    {isResending ? "Reenviando…" : "Reenviar correo de confirmación"}
-                  </button>
+                    Reenviar correo de confirmación
+                  </ConfirmButton>
                 )}
               </div>
             </div>

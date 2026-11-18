@@ -23,6 +23,8 @@ import { useToast } from "../hooks/use-toast";
 import { SkeletonAccountCard } from "../components/SkeletonLoader";
 import useTransactionStore from "../stores/transactionStore";
 import type { CardNetwork } from "../types/account";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 const Accounts = () => {
   const { accounts, fetchAccounts, addAccount, isLoading } = useAccountStore();
@@ -50,8 +52,11 @@ const Accounts = () => {
 
   const totalBalance = totalIncome - totalExpenses;
 
+  const [savingAccount, setSavingAccount] = useState(false);
   const handleAddAccount = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (savingAccount) return;
+    setSavingAccount(true);
     try {
       await addAccount({
         name,
@@ -59,6 +64,7 @@ const Accounts = () => {
         lastFourDigits: digits,
         initialBalance: parseFloat(balance || "0"),
       });
+      await celebrate();
       setIsModalOpen(false);
       setName("");
       setDigits("");
@@ -70,6 +76,8 @@ const Accounts = () => {
         description: "No se pudo crear la cuenta",
         variant: "destructive",
       });
+    } finally {
+      setSavingAccount(false);
     }
   };
 
@@ -140,9 +148,9 @@ const Accounts = () => {
                 />
               </div>
 
-              <Button type="submit" className="w-full">
+              <ConfirmButton type="submit" className="w-full" loading={savingAccount} loadingText="Guardando…">
                 Guardar Cuenta
-              </Button>
+              </ConfirmButton>
             </form>
           </DialogContent>
         </Dialog>

@@ -18,6 +18,7 @@ import {
 import { useToast } from "../hooks/use-toast";
 import { getAuthErrorMessage } from "@/lib/authErrors";
 import { resendConfirmation } from "@/api/authService";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 type Status = "loading" | "success" | "confirmed" | "expired" | "error";
 
@@ -209,9 +210,9 @@ const AuthConfirmed = () => {
                 />
               </CardContent>
               <CardFooter className="flex flex-col space-y-3">
-                <Button className="w-full" onClick={handleResend} disabled={isResending || !email.trim()}>
-                  {isResending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Enviar nuevo enlace"}
-                </Button>
+                <ConfirmButton className="w-full" onClick={handleResend} disabled={!email.trim()} loading={isResending} loadingText="Enviando…">
+                  Enviar nuevo enlace
+                </ConfirmButton>
                 <Button variant="ghost" className="w-full" onClick={() => navigate("/login", { replace: true })}>
                   Ya confirmé, iniciar sesión
                 </Button>
