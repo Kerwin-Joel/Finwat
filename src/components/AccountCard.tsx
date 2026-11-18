@@ -1,228 +1,123 @@
-// import { motion } from "framer-motion";
-// import {
-//   Eye,
-//   EyeOff,
-//   TrendingUp,
-//   TrendingDown,
-//   CreditCard,
-// } from "lucide-react";
-// import type { Account } from "../types/account";
-// import { formatCurrency } from "../utils/formatCurrency";
-// import { useState } from "react";
-
-// interface AccountCardProps {
-//   account: Account;
-// }
-
-// const AccountCard: React.FC<AccountCardProps> = ({ account }) => {
-//   const [showBalance, setShowBalance] = useState(true);
-
-//   return (
-//     <motion.div
-//       initial={{ scale: 0.95, opacity: 0 }}
-//       animate={{ scale: 1, opacity: 1 }}
-//       transition={{ duration: 0.3 }}
-//       className="relative w-full h-auto min-h-[200px] rounded-2xl bg-gradient-to-br from-card to-background border border-border p-6 shadow-lg overflow-hidden"
-//     >
-//       <div className="absolute top-0 right-0 p-6 opacity-5">
-//         <CreditCard size={120} />
-//       </div>
-
-//       <div className="relative z-10 flex flex-col h-full justify-between space-y-6">
-//         <div className="flex justify-between items-start">
-//           <div>
-//             <p className="text-sm text-muted-foreground font-medium mb-1">
-//               {account.name}
-//             </p>
-//             <div className="flex items-center space-x-2">
-//               <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">
-//                 {/* {account.cardNetwork} */}
-//                 {account.cardNetwork ?? account.type}
-//               </span>
-//               {account.lastFourDigits && (
-//                 <span className="text-xs text-muted-foreground">
-//                   •••• {account.lastFourDigits}
-//                 </span>
-//               )}
-//             </div>
-//           </div>
-//           <button
-//             onClick={() => setShowBalance(!showBalance)}
-//             className="p-2 hover:bg-muted rounded-full transition-colors"
-//           >
-//             {showBalance ? (
-//               <Eye size={20} className="text-muted-foreground" />
-//             ) : (
-//               <EyeOff size={20} className="text-muted-foreground" />
-//             )}
-//           </button>
-//         </div>
-
-//         <div>
-//           <p className="text-sm text-muted-foreground mb-1">Balance total</p>
-//           <h2 className="text-3xl font-bold tracking-tight text-foreground">
-//             {showBalance ? formatCurrency(account.balance) : "S/. ••••••"}
-//           </h2>
-//         </div>
-
-//         <div className="flex justify-between items-center pt-4 border-t border-border/50">
-//           <div className="flex items-center space-x-2">
-//             <div className="p-1.5 bg-green-500/10 rounded-full">
-//               <TrendingUp size={16} className="text-green-500" />
-//             </div>
-//             <div>
-//               <p className="text-[10px] text-muted-foreground">Ingresos</p>
-//               <p className="text-sm font-semibold text-green-500">
-//                 {/* {showBalance ? `+${formatCurrency(account.totalIncome)}` : '••••'} */}
-//                 {showBalance
-//                   ? `+${formatCurrency(account.totalIncome ?? 0)}`
-//                   : "••••"}
-//               </p>
-//             </div>
-//           </div>
-//           <div className="flex items-center space-x-2">
-//             <div className="p-1.5 bg-red-500/10 rounded-full">
-//               <TrendingDown size={16} className="text-red-500" />
-//             </div>
-//             <div>
-//               <p className="text-[10px] text-muted-foreground">Gastos</p>
-//               <p className="text-sm font-semibold text-red-500">
-//                 {/* {showBalance
-//                   ? `-${formatCurrency(account.totalExpenses)}`
-//                   : "••••"} */}
-//                 {showBalance
-//                   ? `-${formatCurrency(account.totalExpenses ?? 0)}`
-//                   : "••••"}
-//               </p>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </motion.div>
-//   );
-// };
-
-// export default AccountCard;
-
-import { motion } from "framer-motion";
-import {
-  Eye,
-  EyeOff,
-  TrendingUp,
-  TrendingDown,
-  Wallet,
-  Building2,
-  CreditCard,
-  Banknote,
-} from "lucide-react";
-import type { Account } from "../types/account";
-import { formatCurrency } from "../utils/formatCurrency";
 import { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { ArrowDownLeft, ArrowUpRight, Banknote, Eye, EyeOff, Landmark, Wallet } from "lucide-react";
+import type { Account } from "../types/account";
+import { toNumber } from "../types/account";
+import { formatCurrency } from "../utils/formatCurrency";
+import { Amount } from "./ui/amount";
+import FinwatLogo from "@/assets/FinwatLogo";
+import { EASE_OUT } from "@/lib/motion";
+import { cn } from "@/lib/utils";
+import NetworkMark from "./cards/NetworkMark";
+import { CARD_STYLE_CLASS, accountSubtitle, isCredit } from "./cards/cardStyle";
 
 interface AccountCardProps {
   account: Account;
   totalIncome?: number;
   totalExpenses?: number;
   totalBalance?: number;
+  /** Vista previa (editor): sin animación de entrada ni botón de ocultar */
+  preview?: boolean;
+  className?: string;
 }
 
-const accountTypeConfig = {
-  cash: { label: "Efectivo", icon: Banknote, color: "#22c55e" },
-  bank: { label: "Banco", icon: Building2, color: "#3b82f6" },
-  card: { label: "Tarjeta", icon: CreditCard, color: "#8b5cf6" },
-  wallet: { label: "Billetera", icon: Wallet, color: "#f59e0b" },
-  other: { label: "Otro", icon: Wallet, color: "#6b7280" },
-};
-
+// Tarjeta personalizable: diseño (card_style), red (Visa/Mastercard/Amex/Diners) y tipo.
+// Débito/efectivo/billetera: saldo + ingresos/gastos. Crédito: deuda + disponible/consumos.
 const AccountCard: React.FC<AccountCardProps> = ({
   account,
   totalIncome = 0,
   totalExpenses = 0,
   totalBalance = 0,
+  preview,
+  className,
 }) => {
   const [showBalance, setShowBalance] = useState(true);
-  const typeConfig = accountTypeConfig[account.type] || accountTypeConfig.other;
-  const TypeIcon = typeConfig.icon;
+  const reduce = useReducedMotion();
+  const credit = isCredit(account);
+  const limit = toNumber(account.credit_limit);
+  const debt = Math.max(-totalBalance, 0);
+  const available = limit > 0 ? limit - debt : null;
+  const styleClass = CARD_STYLE_CLASS[account.card_style ?? "aurora"] ?? "hero-aurora";
+  const TypeIcon = account.type === "cash" ? Banknote : account.type === "wallet" ? Wallet : account.type === "bank" ? Landmark : null;
+  const visible = preview || showBalance;
 
   return (
-    <motion.div
-      initial={{ scale: 0.95, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="relative w-full h-auto min-h-[200px] rounded-2xl bg-gradient-to-br from-card to-background border border-border p-6 shadow-lg overflow-hidden"
+    <motion.section
+      initial={reduce || preview ? false : { opacity: 0, y: 12, scale: 0.985 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.6, ease: EASE_OUT }}
+      aria-label={`${account.name}, ${accountSubtitle(account)}`}
+      className={cn(styleClass, "flex flex-col overflow-hidden rounded-[28px] p-5 shadow-float transition-[background] duration-500 md:p-7", className)}
     >
-      <div className="absolute top-0 right-0 p-6 opacity-5">
-        <CreditCard size={120} />
+      {/* Marca de agua del logo */}
+      <div className="pointer-events-none absolute -right-12 -top-12 opacity-[0.07]" aria-hidden="true">
+        <div className="brightness-0 invert">
+          <FinwatLogo size={190} />
+        </div>
       </div>
 
-      <div className="relative z-10 flex flex-col h-full justify-between space-y-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-sm text-muted-foreground font-medium mb-2">
-              {account.name}
-            </p>
-            {/* Badge mejorado */}
-            <div
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full w-fit"
-              style={{
-                backgroundColor: `${typeConfig.color}20`,
-                border: `1px solid ${typeConfig.color}40`,
-              }}
-            >
-              <TypeIcon size={12} style={{ color: typeConfig.color }} />
-              <span
-                className="text-xs font-semibold"
-                style={{ color: typeConfig.color }}
-              >
-                {typeConfig.label}
-              </span>
-            </div>
-          </div>
+      <div className="relative flex items-center justify-between gap-3">
+        <span className="glass-on-hero inline-flex min-w-0 items-center gap-2 rounded-full px-3 py-1.5 text-[12px] font-medium text-white/90">
+          {account.is_default && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-300" aria-label="Cuenta principal" />}
+          <span className="truncate">
+            {account.name || "Nueva cuenta"} · {accountSubtitle(account)}
+          </span>
+        </span>
+        {/* En vista previa se reserva el mismo espacio: la altura no cambia al pasar al frente */}
+        {preview && <span className="h-10 w-10 shrink-0" aria-hidden="true" />}
+        {!preview && (
           <button
+            type="button"
             onClick={() => setShowBalance(!showBalance)}
-            className="p-2 hover:bg-muted rounded-full transition-colors"
+            aria-label={showBalance ? "Ocultar montos" : "Mostrar montos"}
+            aria-pressed={!showBalance}
+            className="glass-on-hero flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white/90 transition-transform duration-200 ease-out-expo active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
           >
-            {showBalance ? (
-              <Eye size={20} className="text-muted-foreground" />
-            ) : (
-              <EyeOff size={20} className="text-muted-foreground" />
-            )}
+            {showBalance ? <Eye size={18} /> : <EyeOff size={18} />}
           </button>
-        </div>
+        )}
+      </div>
 
-        <div>
-          <p className="text-sm text-muted-foreground mb-1">Balance total</p>
-          <h2 className="text-3xl font-bold tracking-tight text-foreground">
-            {showBalance ? formatCurrency(totalBalance) : "S/. ••••••"}
-          </h2>
-        </div>
+      <div className="relative mt-7">
+        <p className="text-[13px] text-white/65">{credit ? "Deuda actual" : account.is_default ? "Balance total" : "Saldo"}</p>
+        <Amount
+          value={credit ? debt : totalBalance}
+          currency={account.currency ?? "PEN"}
+          hidden={!visible}
+          className="mt-1 text-[44px] font-light leading-none tracking-[-0.045em] text-white md:text-[54px]"
+        />
+      </div>
 
-        <div className="flex justify-between items-center pt-4 border-t border-border/50">
-          <div className="flex items-center space-x-2">
-            <div className="p-1.5 bg-green-500/10 rounded-full">
-              <TrendingUp size={16} className="text-green-500" />
-            </div>
-            <div>
-              <p className="text-[10px] text-muted-foreground">Ingresos</p>
-              <p className="text-sm font-semibold text-green-500">
-                {showBalance ? `+${formatCurrency(totalIncome)}` : "••••"}
-              </p>
-            </div>
+      <div className="relative mt-7 grid grid-cols-2 gap-2.5">
+        <div className="glass-on-hero rounded-2xl px-3.5 py-3">
+          <div className="flex items-center gap-1.5 text-[11px] text-white/70">
+            <ArrowDownLeft size={13} className="text-emerald-300" aria-hidden="true" />
+            {credit ? (available !== null ? "Disponible" : "Pagos") : "Ingresos"}
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="p-1.5 bg-red-500/10 rounded-full">
-              <TrendingDown size={16} className="text-red-500" />
-            </div>
-            <div>
-              <p className="text-[10px] text-muted-foreground">Gastos</p>
-              <p className="text-sm font-semibold text-red-500">
-                {showBalance ? `-${formatCurrency(totalExpenses)}` : "••••"}
-              </p>
-            </div>
+          <p className="num mt-1 text-[15px] font-medium text-white">
+            {!visible ? "••••" : credit && available !== null ? formatCurrency(available) : `+${formatCurrency(totalIncome)}`}
+          </p>
+        </div>
+        <div className="glass-on-hero rounded-2xl px-3.5 py-3">
+          <div className="flex items-center gap-1.5 text-[11px] text-white/70">
+            <ArrowUpRight size={13} className="text-rose-300" aria-hidden="true" /> {credit ? "Consumos" : "Gastos"}
           </div>
+          <p className="num mt-1 text-[15px] font-medium text-white">{visible ? `−${formatCurrency(totalExpenses)}` : "••••"}</p>
         </div>
       </div>
-    </motion.div>
+
+      {/* Pie: banco, últimos dígitos y red */}
+      {(account.bank_name || account.last4 || (account.card_network && account.card_network !== "otra")) && (
+        <div className="relative mt-auto flex items-center justify-between gap-3 pt-5 text-[12.5px] text-white/75">
+          <span className="flex min-w-0 items-center gap-2">
+            {TypeIcon && <TypeIcon className="h-4 w-4 shrink-0" aria-hidden="true" />}
+            <span className="truncate">{account.bank_name}</span>
+            {account.last4 && <span className="num shrink-0 tracking-[0.12em] text-white/90">•••• {account.last4}</span>}
+          </span>
+          <NetworkMark network={account.card_network} />
+        </div>
+      )}
+    </motion.section>
   );
 };
 

@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2, ArrowLeft, Mail } from "lucide-react";
-import { Button } from "../components/ui/button";
+import { ArrowLeft, Mail } from "lucide-react";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import {
@@ -17,6 +16,9 @@ import { useToast } from "../hooks/use-toast";
 import FinwatLogo from "../assets/FinwatLogo";
 import { sendPasswordReset } from "../api/authService";
 import { getAuthErrorMessage } from "../lib/authErrors";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
+import { WaveReveal } from "@/components/ui/wave-reveal";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -30,6 +32,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
     try {
       await sendPasswordReset(email.trim());
+      await celebrate();
       setSent(true);
     } catch (error) {
       toast({
@@ -71,6 +74,7 @@ const ForgotPassword = () => {
           </CardHeader>
 
           {sent ? (
+            <WaveReveal>
             <CardContent className="space-y-4 text-center py-6">
               <div className="flex justify-center">
                 <div className="bg-green-500/10 p-4 rounded-full">
@@ -91,6 +95,7 @@ const ForgotPassword = () => {
                 ¿No te llegó? Enviar de nuevo
               </button>
             </CardContent>
+            </WaveReveal>
           ) : (
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4">
@@ -107,13 +112,9 @@ const ForgotPassword = () => {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    "Enviar correo"
-                  )}
-                </Button>
+                <ConfirmButton type="submit" className="w-full" loading={isLoading} loadingText="Enviando…">
+                  Enviar correo
+                </ConfirmButton>
               </CardFooter>
             </form>
           )}

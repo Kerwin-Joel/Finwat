@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import useAuthStore from "./stores/authStore";
-import useThemeStore from "./stores/themeStore";
+import useThemeStore, { useResolvedTheme } from "./stores/themeStore";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
 import Home from "./pages/Home";
@@ -12,6 +12,7 @@ import Services from "./pages/Services";
 import Profile from "./pages/Profile";
 import { Toaster } from "./components/ui/toaster";
 import PublicRoute from "./components/layout/PublicRoute";
+import ThemeColorSync from "./components/layout/ThemeColorSync";
 import ForgotPassword from "./pages/ForgotPassword";
 import SplashScreen from "./components/SplashScreen";
 import ResetPassword from "./pages/ResetPassword";
@@ -19,10 +20,12 @@ import AuthConfirmed from "./pages/AuthConfirmed";
 import Analytics from "./pages/Analytics";
 import Reminders from "./pages/Reminders";
 import Loans from "./pages/Loans";
+import Investments from "./pages/Investments";
+import InvestmentLineDetail from "./pages/InvestmentLineDetail";
 
 function App() {
   const initAuth = useAuthStore((state) => state.initAuth);
-  const theme = useThemeStore((state) => state.theme);
+  const theme = useResolvedTheme();
   const customColors = useThemeStore((state) => state.customColors);
 
   // Initialize auth on mount
@@ -69,6 +72,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <ThemeColorSync />
       {/* 
         Note: AnimatePresence mode="wait" works best with unique keys on Routes. 
         However, React Router v6 Routes don't accept keys easily for transitions 
@@ -112,6 +116,8 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="reminders" element={<Reminders />} />
           <Route path="loans" element={<Loans />} />
+          <Route path="investments" element={<Investments />} />
+          <Route path="investments/:lineId" element={<InvestmentLineDetail />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

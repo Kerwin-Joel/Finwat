@@ -4,6 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+    <!-- Tema antes del primer pintado (evita el destello blanco en modo oscuro) -->
+    <script>
+      (function () {
+        try {
+          var st = (JSON.parse(localStorage.getItem("theme-storage") || "{}").state || {});
+          var t = st.theme || "light";
+          if (t === "system") t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          document.documentElement.classList.add(t);
+        } catch (e) {}
+      })();
+    </script>
+
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
@@ -81,8 +93,11 @@
     <meta name="twitter:image:alt" content="Finwat - Descubre a dónde se va tu dinero" />
 
     <!-- Theme color (barra del navegador en móvil) -->
-    <meta name="theme-color" content="#050d1a" />
-    <meta name="msapplication-TileColor" content="#050d1a" />
+    <!-- Color inicial de la barra del navegador (la app lo ajusta por pantalla en ThemeColorSync) -->
+    <meta name="theme-color" content="#050a1c" />
+    <meta name="msapplication-TileColor" content="#0a1748" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   </head>
   <body>
     <div id="root"></div>

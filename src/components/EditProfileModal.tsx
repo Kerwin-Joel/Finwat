@@ -12,6 +12,8 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { useToast } from '../hooks/use-toast';
 import useAuthStore from '../stores/authStore';
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 interface EditProfileModalProps {
     isOpen: boolean;
@@ -53,6 +55,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) 
                 dateOfBirth: dateOfBirth || undefined,
             });
 
+            await celebrate();
             toast({
                 title: 'Perfil actualizado',
                 description: 'Tus datos se han guardado correctamente.',
@@ -127,9 +130,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) 
                         <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={isLoading}>
-                            {isLoading ? 'Guardando...' : 'Guardar Cambios'}
-                        </Button>
+                        <ConfirmButton type="submit" loading={isLoading} loadingText="Guardando…">
+                            Guardar Cambios
+                        </ConfirmButton>
                     </DialogFooter>
                 </form>
             </DialogContent>

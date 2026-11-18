@@ -1,13 +1,24 @@
 import { create } from "zustand";
-import type { Account, CreateAccountRequest } from "../types/account";
-import { getAccounts, createAccount } from "../api/accountService";
+import type { Account, CreateAccountRequest, UpdateAccountRequest } from "../types/account";
+import { toNumber } from "../types/account";
+import {
+  archiveAccount,
+  createAccount,
+  getAccounts,
+  setDefaultAccount,
+  updateAccount,
+} from "../api/accountService";
 
 interface AccountState {
   accounts: Account[];
   isLoading: boolean;
   error: string | null;
   fetchAccounts: () => Promise<void>;
-  addAccount: (payload: CreateAccountRequest) => Promise<void>;
+  /** Crea la cuenta; si makeDefault, además la vuelve principal. Lanza el error para la UI. */
+  addAccount: (payload: CreateAccountRequest, makeDefault?: boolean) => Promise<Account>;
+  editAccount: (id: string, patch: UpdateAccountRequest) => Promise<void>;
+  archive: (id: string) => Promise<void>;
+  makeDefault: (id: string) => Promise<void>;
   getTotalBalance: () => number;
   getTotalIncome: () => number;
   getTotalExpenses: () => number;
@@ -31,26 +42,31 @@ const useAccountStore = create<AccountState>((set, get) => ({
     }
   },
 
-  addAccount: async (payload) => {
-    set({ isLoading: true });
-    try {
-      const newAccount = await createAccount(payload);
-      set((state) => ({
-        accounts: [...state.accounts, newAccount],
-        isLoading: false,
-      }));
-    } catch (err) {
-      set({
-        error: err instanceof Error ? err.message : "Error al crear cuenta",
-        isLoading: false,
-      });
-    }
+  addAccount: async (payload, makeDefault) => {
+    const created = await createAccount(payload);
+    if (makeDefault) await setDefaultAccount(created.id);
+    await get().fetchAccounts();
+    return created;
   },
 
-  getTotalBalance: () =>
-    get().accounts.reduce((sum, acc) => sum + acc.balance, 0),
-  getTotalIncome: () => 0, // se calculará desde transactions
-  getTotalExpenses: () => 0, // se calculará desde transactions
+  editAccount: async (id, patch) => {
+    await updateAccount(id, patch);
+    await get().fetchAccounts();
+  },
+
+  archive: async (id) => {
+    await archiveAccount(id);
+    await get().fetchAccounts();
+  },
+
+  makeDefault: async (id) => {
+    await setDefaultAccount(id);
+    await get().fetchAccounts();
+  },
+
+  getTotalBalance: () => get().accounts.reduce((sum, acc) => sum + toNumber(acc.balance), 0),
+  getTotalIncome: () => 0, // se calcula desde transactions
+  getTotalExpenses: () => 0, // se calcula desde transactions
 }));
 
 export default useAccountStore;

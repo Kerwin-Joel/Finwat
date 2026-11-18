@@ -41,6 +41,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import useCategoryStore from "../stores/categoryStore";
 import { parseDate } from "@/utils/dateUtils";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 interface EditTransactionModalProps {
   isOpen: boolean;
@@ -93,6 +95,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
         account_id: accountId,
         transaction_date: format(date, "yyyy-MM-dd"),
       });
+      await celebrate();
       toast({
         title: "Movimiento actualizado",
         description: "Los cambios se han guardado correctamente.",
@@ -230,6 +233,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
                   {accounts.map((acc) => (
                     <SelectItem key={acc.id} value={acc.id}>
                       {acc.name}
+                      {acc.last4 ? ` •••• ${acc.last4}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -306,9 +310,9 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
               </AlertDialogContent>
             </AlertDialog>
 
-            <Button type="submit" className="flex-1" disabled={isSubmitting}>
-              {isSubmitting ? "Guardando..." : "Guardar Cambios"}
-            </Button>
+            <ConfirmButton type="submit" className="flex-1" loading={isSubmitting} loadingText="Guardando…">
+              Guardar Cambios
+            </ConfirmButton>
           </DialogFooter>
         </form>
       </DialogContent>

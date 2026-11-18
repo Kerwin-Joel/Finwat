@@ -12,6 +12,8 @@ import type {
   ReminderType,
   ReminderRecurrence,
 } from "../types/reminder";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 interface AddReminderModalProps {
   isOpen: boolean;
@@ -104,6 +106,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
         recurrence,
         notes: notes.trim() || undefined,
       });
+      await celebrate();
       onCreated(reminder);
       reset();
       toast({ title: "🔔 Recordatorio creado" });
@@ -285,9 +288,9 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
           <Button variant="outline" className="flex-1" onClick={handleClose}>
             Cancelar
           </Button>
-          <Button className="flex-1" onClick={handleSubmit} disabled={saving}>
-            {saving ? "Guardando..." : "🔔 Crear Recordatorio"}
-          </Button>
+          <ConfirmButton className="flex-1" onClick={handleSubmit} loading={saving} loadingText="Guardando…">
+            🔔 Crear Recordatorio
+          </ConfirmButton>
         </div>
       </DialogContent>
     </Dialog>

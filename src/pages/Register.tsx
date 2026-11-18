@@ -1,26 +1,20 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Eye, EyeOff, Loader2, MailCheck } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { AlertCircle, Loader2, MailCheck } from "lucide-react";
 import useAuthStore from "../stores/authStore";
 import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
 import { useToast } from "../hooks/use-toast";
+import { AuthInput, FieldBox } from "@/components/auth/AuthField";
+import { EASE_OUT } from "@/lib/motion";
 import PhoneInputField from "../components/ui/phone-input";
 import "react-phone-number-input/style.css";
 import { isValidPhoneNumber } from "react-phone-number-input";
-import FinwatLogo from "@/assets/FinwatLogo";
+import AuthShell from "@/components/layout/AuthShell";
 import { getAuthErrorMessage } from "@/lib/authErrors";
 import { resendConfirmation } from "@/api/authService";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -69,6 +63,7 @@ const Register = () => {
         setPendingEmail(email.trim());
         return;
       }
+      await celebrate();
       toast({
         title: "¡Cuenta creada!",
         description: "Bienvenido a FinWat.",
@@ -99,163 +94,143 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-primary mb-2 flex items-center justify-center gap-1">
-            <FinwatLogo size={40} />
-            inwat
-          </h1>
-          <p className="text-sm font-medium bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-            Únete y toma el control.
-          </p>
-        </div>
-
-        <Card className="border-border/50 shadow-xl bg-card/50 backdrop-blur-sm">
-          {pendingEmail ? (
-            <>
-              <CardHeader>
-                <CardTitle>Confirma tu correo</CardTitle>
-                <CardDescription>Solo falta un paso para activar tu cuenta</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 text-center py-4">
-                <div className="flex justify-center">
-                  <div className="bg-green-500/10 p-4 rounded-full">
-                    <MailCheck className="h-8 w-8 text-green-500" />
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Enviamos un enlace de confirmación a{" "}
-                  <span className="font-medium text-foreground">{pendingEmail}</span>.
-                  Ábrelo para activar tu cuenta y luego inicia sesión.
-                </p>
-              </CardContent>
-              <CardFooter className="flex flex-col space-y-3">
-                <Button className="w-full" onClick={() => navigate("/login")}>
-                  Ir a iniciar sesión
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full"
-                  onClick={handleResend}
-                  disabled={isResending}
+    <AuthShell
+      title={
+        <>
+          Empieza a
+          <br />
+          ordenar tu dinero.
+        </>
+      }
+      subtitle="Crea tu cuenta gratis: gastos, recordatorios e inversiones en un solo lugar."
+    >
+      <AnimatePresence mode="wait" initial={false}>
+        {pendingEmail ? (
+          <motion.div
+            key="confirm"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.4, ease: EASE_OUT }}
+            className="space-y-5 text-center"
+          >
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-positive/10">
+              <MailCheck className="h-8 w-8 text-positive" aria-hidden="true" />
+            </div>
+            <div>
+              <h2 className="text-[26px] font-bold tracking-[-0.035em]">Confirma tu correo</h2>
+              <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
+                Enviamos un enlace a <span className="font-semibold text-foreground">{pendingEmail}</span>. Ábrelo para
+                activar tu cuenta y luego inicia sesión.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Button size="lg" className="w-full" onClick={() => navigate("/login?ingresar")}>
+                Ir a iniciar sesión
+              </Button>
+              <Button size="lg" variant="ghost" className="w-full" onClick={handleResend} disabled={isResending}>
+                {isResending ? <Loader2 className="h-4 w-4 animate-spin" aria-label="Reenviando" /> : "Reenviar correo"}
+              </Button>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.form
+            key="form"
+            onSubmit={handleSubmit}
+            noValidate
+            className="space-y-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3, ease: EASE_OUT }}
+          >
+            <div className="mb-5">
+              <h2 className="text-[28px] font-bold tracking-[-0.035em]">Crear cuenta</h2>
+              <p className="mt-1 text-[14px] text-muted-foreground">Completa tus datos para comenzar</p>
+            </div>
+            <FieldBox label="Nombre completo" htmlFor="name">
+              <AuthInput id="name" autoComplete="name" placeholder="Juan Pérez" value={name} onChange={(e) => setName(e.target.value)} />
+            </FieldBox>
+            <FieldBox label="Correo" htmlFor="email">
+              <AuthInput
+                id="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                placeholder="ejemplo@correo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </FieldBox>
+            <FieldBox label="Celular (el de tu WhatsApp)" htmlFor="phone">
+              <PhoneInputField id="phone" bare value={phone} onChange={(val) => setPhone(val)} />
+            </FieldBox>
+            <FieldBox
+              label="Contraseña · mínimo 6 caracteres"
+              htmlFor="password"
+              trailing={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="shrink-0 rounded-full px-2 py-1 text-[12.5px] font-semibold text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-pressed={showPassword}
                 >
-                  {isResending ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    "Reenviar correo"
-                  )}
-                </Button>
-              </CardFooter>
-            </>
-          ) : (
-          <>
-          <CardHeader>
-            <CardTitle>Crear cuenta</CardTitle>
-            <CardDescription>Completa tus datos para comenzar</CardDescription>
-          </CardHeader>
-          <form onSubmit={handleSubmit} noValidate>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nombre completo</Label>
-                <Input
-                  id="name"
-                  placeholder="Juan Pérez"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Correo electrónico</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="ejemplo@correo.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Celular</Label>
-                <PhoneInputField
-                  value={phone}
-                  onChange={(val) => setPhone(val)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-                <p className="text-xs text-muted-foreground">Mínimo 6 caracteres</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-                <Input
-                  id="confirmPassword"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
+                  {showPassword ? "Ocultar" : "Mostrar"}
+                </button>
+              }
+            >
+              <AuthInput
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </FieldBox>
+            <FieldBox label="Confirmar contraseña" htmlFor="confirmPassword">
+              <AuthInput
+                id="confirmPassword"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </FieldBox>
+
+            <AnimatePresence initial={false}>
               {formError && (
                 <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-3 py-2 rounded-lg"
+                  key="error"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3, ease: EASE_OUT }}
+                  className="overflow-hidden"
+                  role="alert"
                 >
-                  <span>⚠️</span>
-                  <span>{formError}</span>
+                  <div className="flex items-start gap-2 rounded-2xl bg-destructive/10 px-4 py-3 text-[13px] text-destructive">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    <p>{formError}</p>
+                  </div>
                 </motion.div>
               )}
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  "Registrarse"
-                )}
-              </Button>
-              <div className="text-center text-sm text-muted-foreground">
-                ¿Ya tienes una cuenta?{" "}
-                <Link
-                  to="/login"
-                  className="text-primary hover:underline font-medium"
-                >
-                  Inicia sesión
-                </Link>
-              </div>
-            </CardFooter>
-          </form>
-          </>
-          )}
-        </Card>
-      </motion.div>
-    </div>
+            </AnimatePresence>
+
+            <ConfirmButton type="submit" size="lg" className="mt-2 w-full" loading={isLoading} loadingText="Creando tu cuenta…">
+              Crear cuenta
+            </ConfirmButton>
+            <p className="pt-2 text-center text-[13.5px] text-muted-foreground">
+              ¿Ya tienes cuenta?{" "}
+              <Link to="/login?ingresar" className="font-semibold text-foreground hover:underline">
+                Inicia sesión
+              </Link>
+            </p>
+          </motion.form>
+        )}
+      </AnimatePresence>
+    </AuthShell>
   );
 };
 

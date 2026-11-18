@@ -14,6 +14,8 @@ import ChangePasswordModal from '../components/ChangePasswordModal';
 import ProfilePhotoModal from '../components/ProfilePhotoModal';
 import HelpSupportModal from '../components/HelpSupportModal';
 import CategorySettingsModal from '../components/CategorySettingsModal';
+import AccountsManager from '../components/cards/AccountsManager';
+import ThemePicker from '../components/ThemePicker';
 
 // Preset color palette for custom theme
 const PRESET_COLORS = [
@@ -114,30 +116,21 @@ const Profile = () => {
                 </Card>
             </div>
 
+            <AccountsManager />
+
             <div className="space-y-2">
                 <h3 className="text-sm font-medium text-muted-foreground mb-4">Apariencia</h3>
-                <div className="grid grid-cols-3 gap-2">
-                    <Button
-                        variant={theme === 'light' ? 'default' : 'outline'}
-                        onClick={() => setTheme('light')}
-                        className="w-full"
-                    >
-                        Claro
-                    </Button>
-                    <Button
-                        variant={theme === 'dark' ? 'default' : 'outline'}
-                        onClick={() => setTheme('dark')}
-                        className="w-full"
-                    >
-                        Oscuro
-                    </Button>
+                <ThemePicker />
+                <div className="mt-2.5">
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button
-                                variant={theme === 'custom' ? 'default' : 'outline'}
-                                className="w-full"
+                                variant="outline"
+                                className={`w-full justify-start gap-2 ${theme === 'custom' ? 'border-brand text-brand' : ''}`}
                             >
-                                Personal
+                                <Palette className="h-4 w-4" />
+                                Tema personalizado
+                                {theme === 'custom' && <span className="ml-auto text-xs font-normal text-muted-foreground">Activo</span>}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-80">

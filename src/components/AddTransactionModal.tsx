@@ -21,6 +21,8 @@ import type {
   TransactionCategory,
   TransactionType,
 } from "../types/transaction";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { celebrate } from "@/lib/celebrate";
 
 // shadcn utils alias workaround if not using `@/lib/utils`
 
@@ -42,7 +44,9 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<TransactionCategory>("OTROS");
-  const [accountId, setAccountId] = useState(accounts[0]?.id || "");
+  const [pickedAccountId, setAccountId] = useState("");
+  // Si no eligió ninguna (o las cuentas cargaron después de montar), usar la principal
+  const accountId = pickedAccountId || accounts.find((a) => a.is_default)?.id || accounts[0]?.id || "";
   const [date, setDate] = useState<Date>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -60,6 +64,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
         account_id: accountId,
         transaction_date: format(date, "yyyy-MM-dd"),
       });
+      await celebrate();
       toast({
         title: "Movimiento registrado",
         // description: `${type === "income" ? "Ingreso" : "Gasto"} de S/. ${amount} guardado.`,
@@ -193,6 +198,8 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   {accounts.map((acc) => (
                     <SelectItem key={acc.id} value={acc.id}>
                       {acc.name}
+                      {acc.last4 ? ` •••• ${acc.last4}` : ""}
+                      {acc.is_default ? " · principal" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -234,9 +241,9 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             <Label>Fecha</Label>
             <DatePicker date={date} onDateChange={setDate} />
           </div>
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Guardando..." : "Guardar y Confirmar"}
-          </Button>
+          <ConfirmButton type="submit" className="w-full" loading={isSubmitting} loadingText="Guardando…">
+            Guardar y Confirmar
+          </ConfirmButton>
         </form>
       </DialogContent>
     </Dialog>

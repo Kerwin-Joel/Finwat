@@ -1,110 +1,118 @@
-import { useEffect, useState, useRef } from "react";
-import { Menu, LogOut, RefreshCcw } from "lucide-react";
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, useReducedMotion } from "framer-motion";
+import {
+  Bell,
+  DollarSign,
+  FileText,
+  LayoutGrid,
+  LogOut,
+  Menu,
+  Plus,
+  RefreshCcw,
+  Target,
+  TrendingUp,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import useAuthStore from "../stores/authStore";
 import useAccountStore from "../stores/accountStore";
 import useTransactionStore from "../stores/transactionStore";
-import AccountCard from "../components/AccountCard";
+import CardCarousel from "../components/cards/CardCarousel";
+import AccountSheet from "../components/cards/AccountSheet";
+import MonthSpending from "../components/MonthSpending";
 import TransactionList from "../components/TransactionList";
-import FABButton from "../components/FABButton";
 import AddTransactionModal from "../components/AddTransactionModal";
 import { SkeletonAccountCard } from "../components/SkeletonLoader";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
-
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "../components/ui/sheet";
-import type {
-  TransactionFilters,
-  SortOption,
-  Transaction,
-} from "../types/transaction";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../components/ui/sheet";
+import type { TransactionFilters, SortOption, Transaction } from "../types/transaction";
 import OnboardingModal from "@/components/OnboardingModal";
 import EditTransactionModal from "@/components/EditTransactionModal";
-import { Bell, DollarSign, FileText, Users, Target } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import WhatsAppIcon from "@/assets/WhatsAppIcon";
+import FinwatLogo from "@/assets/FinwatLogo";
+import { riseItem, staggerContainer } from "@/lib/motion";
+
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_BOT_NUMBER;
+
+const greeting = () => {
+  const h = Number(
+    new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: false, timeZone: "America/Lima" }).format(new Date()),
+  );
+  return h < 12 ? "Buenos días" : h < 19 ? "Buenas tardes" : "Buenas noches";
+};
+
+/** Mosaico de acceso rápido: ícono en cuadrado oscuro + etiqueta en mayúsculas */
+const QuickAction = ({
+  icon: Icon,
+  label,
+  onClick,
+  href,
+  custom,
+  mobileOnly,
+  desktopOnly,
+}: {
+  icon?: LucideIcon;
+  label: string;
+  onClick?: () => void;
+  href?: string;
+  custom?: React.ReactNode;
+  mobileOnly?: boolean;
+  desktopOnly?: boolean;
+}) => {
+  const content = (
+    <>
+      <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary text-primary-foreground dark:bg-brand-soft dark:text-brand [&_svg]:h-4 [&_svg]:w-4">
+        {custom ?? (Icon && <Icon className="h-4 w-4" strokeWidth={2.2} />)}
+      </span>
+      <span className="eyebrow text-foreground/80">{label}</span>
+    </>
+  );
+  const cls =
+    "surface flex aspect-[1/1.02] w-full flex-col items-start justify-between p-3 transition-[transform,box-shadow] duration-200 ease-out-expo active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:aspect-auto md:h-[112px] md:p-4 md:hover:-translate-y-0.5 md:hover:shadow-float";
+  return (
+    <motion.div variants={riseItem} className={mobileOnly ? "md:hidden" : desktopOnly ? "hidden md:block" : undefined}>
+      {href ? (
+        <a href={href} target="_blank" rel="noopener noreferrer" className={cls} aria-label={label}>
+          {content}
+        </a>
+      ) : (
+        <button type="button" onClick={onClick} className={cls} aria-label={label}>
+          {content}
+        </button>
+      )}
+    </motion.div>
+  );
+};
 
 const Home = () => {
-  // Dentro del componente agrega:
   const navigate = useNavigate();
+  const reduce = useReducedMotion();
   const { user, logout } = useAuthStore();
-  const {
-    accounts,
-    fetchAccounts,
-    isLoading: loadingAccounts,
-  } = useAccountStore();
-  //   const {
-  //     transactions,
-  //     fetchTransactions,
-  //     isLoading: loadingTransactions,
-  //     filters,
-  //     setFilters,
-  //     sortOption,
-  //     setSortOption,
-  //   } = useTransactionStore();
-  const {
-    transactions,
-    fetchTransactions,
-    isLoading: loadingTransactions,
-  } = useTransactionStore();
+  const { accounts, fetchAccounts, isLoading: loadingAccounts } = useAccountStore();
+  const { transactions, fetchTransactions, isLoading: loadingTransactions } = useTransactionStore();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  //   useEffect(() => {
-  //     fetchAccounts();
-  //     fetchTransactions(filters);
-  //   }, [fetchAccounts, fetchTransactions, filters]);
   useEffect(() => {
     fetchAccounts();
     fetchTransactions();
   }, []);
 
-  // For MVP, just show the first account or a consolidated view.
-  // The user requirement says "If multiple accounts exist, show the first account or a consolidated summary."
-  // I'll show the first account for simplicity, or a dummy "Total" account if I had logic for it.
-  // Let's pick the first account.
-  const mainAccount = accounts[0];
-
-  //   const totalIncome = transactions
-  //     .filter((t) => t.type === "income")
-  //     .reduce((sum, t) => sum + t.amount, 0);
-
-  //   const totalExpenses = transactions
-  //     .filter((t) => t.type === "expense")
-  //     .reduce((sum, t) => sum + t.amount, 0);
-
-  //   const totalBalance = totalIncome - totalExpenses;
-
-  // Calcular siempre desde TODAS las transacciones
-  const totalIncome = transactions
-    .filter((t) => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const totalExpenses = transactions
-    .filter((t) => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const totalBalance = totalIncome - totalExpenses;
+  const [accountSheetOpen, setAccountSheetOpen] = useState(false);
 
   // Filtros locales solo para la lista
   const [localFilters, setLocalFilters] = useState<TransactionFilters>({});
-  const [localSortOption, setLocalSortOption] =
-    useState<SortOption>("DATE_DESC");
+  const [localSortOption, setLocalSortOption] = useState<SortOption>("DATE_DESC");
 
   const filteredTransactions = transactions
     .filter((t) => {
       if (localFilters.type && t.type !== localFilters.type) return false;
-      if (localFilters.category && t.category !== localFilters.category)
-        return false;
-      if (localFilters.startDate && t.transaction_date < localFilters.startDate)
-        return false;
-      if (localFilters.endDate && t.transaction_date > localFilters.endDate)
-        return false;
+      if (localFilters.category && t.category !== localFilters.category) return false;
+      if (localFilters.startDate && t.transaction_date < localFilters.startDate) return false;
+      if (localFilters.endDate && t.transaction_date > localFilters.endDate) return false;
       return true;
     })
     .sort((a, b) => {
@@ -112,22 +120,8 @@ const Home = () => {
       if (localSortOption === "AMOUNT_ASC") return a.amount - b.amount;
       return b.transaction_date.localeCompare(a.transaction_date);
     });
-  const [showTopShadow, setShowTopShadow] = useState(false);
-  const [showBottomShadow, setShowBottomShadow] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleScroll = () => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      setShowTopShadow(scrollTop > 0);
-      // Show bottom shadow if we are not at the very bottom (with a small buffer)
-      setShowBottomShadow(scrollHeight - scrollTop - clientHeight > 10);
-    }
-  };
-
-  const [selectedTransaction, setSelectedTransaction] =
-    useState<Transaction | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const handleTransactionClick = (transaction: Transaction) => {
@@ -139,148 +133,109 @@ const Home = () => {
     setSelectedTransaction(null);
   };
 
-  // Check scroll state initially and on transactions change
-  useEffect(() => {
-    handleScroll();
-    // Also add logic to check when window resizes if needed, but flex layout handles mostly.
-    // We re-check when transactions load.
-  }, [transactions]);
+  const go = (path: string) => {
+    setMenuOpen(false);
+    navigate(path);
+  };
+
+  const firstName = user?.name?.split(" ")[0] ?? "";
+
+  const today = new Date().toLocaleDateString("es-PE", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "America/Lima",
+  });
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] space-y-4 relative">
-      {/* Fixed Header Section */}
-      <div className="shrink-0 space-y-6 pt-2 px-1">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10 border border-border">
-              <AvatarImage src={user?.photoUrl} />
-              <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-xs text-muted-foreground">Hola,</p>
-              <h2 className="text-sm font-bold">{user?.name}</h2>
-            </div>
-          </div>
-
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left">
-              <SheetHeader>
-                <SheetTitle>Menú</SheetTitle>
-              </SheetHeader>
-              <div className="py-6 space-y-2">
-                {/* Secciones */}
-                <p className="text-xs text-muted-foreground px-2 pb-1">
-                  Secciones
-                </p>
-
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-3"
-                  onClick={() => navigate("reminders")}
-                >
-                  <Bell className="h-4 w-4 text-blue-400" />
-                  Recordatorios
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-3"
-                  onClick={() => navigate("loans")}
-                >
-                  <DollarSign className="h-4 w-4 text-green-400" />
-                  Préstamos
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-3 opacity-50"
-                  disabled
-                >
-                  <FileText className="h-4 w-4 text-yellow-400" />
-                  Reportes
-                  <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full">
-                    Pronto
-                  </span>
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-3 opacity-50"
-                  disabled
-                >
-                  <Users className="h-4 w-4 text-purple-400" />
-                  Deudas Compartidas
-                  <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full">
-                    Pronto
-                  </span>
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-3 opacity-50"
-                  disabled
-                >
-                  <Target className="h-4 w-4 text-pink-400" />
-                  Metas de Ahorro
-                  <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full">
-                    Pronto
-                  </span>
-                </Button>
-
-                <div className="border-t border-border my-3" />
-
-                {/* Acciones */}
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => window.location.reload()}
-                >
-                  <RefreshCcw className="mr-2 h-4 w-4" /> Recargar Datos
-                </Button>
-                <Button
-                  variant="destructive"
-                  className="w-full justify-start"
-                  onClick={logout}
-                >
-                  <LogOut className="mr-2 h-4 w-4" /> Cerrar Sesión
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-
-        {/* Account Card */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4 }}
+    <div className="relative space-y-5 pb-6 md:space-y-7">
+      {/* Barra de marca (móvil): en escritorio el logo vive en la barra lateral */}
+      <div className="flex items-center justify-between md:hidden">
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 rounded-xl py-1 pr-2 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label="Finwat, inicio"
         >
-          {loadingAccounts || !mainAccount ? (
-            <SkeletonAccountCard />
-          ) : (
-            <AccountCard
-              account={mainAccount}
-              totalIncome={totalIncome}
-              totalExpenses={totalExpenses}
-              totalBalance={totalBalance}
-            />
-          )}
-        </motion.div>
+          <FinwatLogo size={26} />
+          <span className="text-[18px] font-bold tracking-[-0.035em]">Finwat</span>
+        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate("/profile")}
+            aria-label="Ir a tu perfil"
+            className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Avatar className="h-10 w-10 border border-border/70 shadow-soft">
+              <AvatarImage src={user?.photoUrl} />
+              <AvatarFallback className="bg-primary text-[14px] font-semibold text-primary-foreground">
+                {user?.name?.charAt(0) || "U"}
+              </AvatarFallback>
+            </Avatar>
+          </button>
+          <Button variant="outline" size="icon" className="h-10 w-10 shadow-soft" aria-label="Abrir menú" onClick={() => setMenuOpen(true)}>
+            <Menu className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
 
-      {/* Scrollable Recent Transactions Container Wrapper */}
-      <div className="flex-1 relative min-h-0">
-        <div
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-          className="h-full overflow-y-auto -mx-4 px-4 pb-4"
-        >
+      {/* Encabezado */}
+      <header className="flex items-end justify-between gap-4 md:items-center md:pt-1">
+        <div>
+          <p className="text-[13px] text-muted-foreground first-letter:uppercase">
+            <span className="md:hidden">{greeting()},</span>
+            <span className="hidden md:inline">{today}</span>
+          </p>
+          <h1 className="text-[26px] font-bold leading-tight tracking-[-0.035em] md:text-[28px]">
+            <span className="hidden md:inline">{greeting()}, </span>
+            {firstName || "Hola"}
+          </h1>
+        </div>
+        <div className="hidden items-center gap-2 md:flex">
+          <Button variant="outline" asChild className="hidden lg:inline-flex">
+            <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer">
+              <span className="[&_svg]:h-4 [&_svg]:w-4">
+                <WhatsAppIcon color="currentColor" />
+              </span>
+              Registrar por WhatsApp
+            </a>
+          </Button>
+          <Button onClick={() => setIsAddModalOpen(true)}>
+            <Plus className="h-4 w-4" /> Nuevo movimiento
+          </Button>
+        </div>
+      </header>
+
+      <div className="grid gap-5 md:gap-7 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <div className="space-y-5 md:space-y-6 lg:sticky lg:top-8">
+          {/* Balance */}
+          {loadingAccounts && accounts.length === 0 ? (
+            <SkeletonAccountCard />
+          ) : (
+            <CardCarousel accounts={accounts} transactions={transactions} onAdd={() => setAccountSheetOpen(true)} />
+          )}
+
+          {/* Accesos rápidos */}
+          <motion.nav
+            aria-label="Accesos rápidos"
+            className="grid grid-cols-4 gap-2.5 md:gap-3"
+            variants={staggerContainer}
+            initial={reduce ? false : "hidden"}
+            animate="show"
+          >
+            <QuickAction icon={Plus} label="Agregar" onClick={() => setIsAddModalOpen(true)} />
+            <QuickAction label="WhatsApp" href={`https://wa.me/${WHATSAPP_NUMBER}`} custom={<WhatsAppIcon color="currentColor" />} />
+            <QuickAction icon={TrendingUp} label="Invertir" onClick={() => navigate("/investments")} />
+            <QuickAction icon={Bell} label="Recordar" onClick={() => navigate("/reminders")} desktopOnly />
+            <QuickAction icon={LayoutGrid} label="Más" onClick={() => setMenuOpen(true)} mobileOnly />
+          </motion.nav>
+
+          {!loadingTransactions && <MonthSpending transactions={transactions} className="hidden md:block" />}
+        </div>
+
+        {/* Movimientos */}
+        <section aria-label="Movimientos recientes" className="min-w-0">
           <TransactionList
             transactions={filteredTransactions}
             isLoading={loadingTransactions}
@@ -288,32 +243,74 @@ const Home = () => {
             onFilterChange={setLocalFilters}
             sortOption={localSortOption}
             onSortChange={setLocalSortOption}
-            showScrollShadow={showTopShadow}
             onTransactionClick={handleTransactionClick}
             limit={10}
           />
-          <EditTransactionModal
-            isOpen={isEditModalOpen}
-            onClose={handleCloseEditModal}
-            transaction={selectedTransaction}
-          />
-        </div>
-
-        {/* Bottom Scroll Indicator Shadow */}
-        <div
-          className={`absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none transition-opacity duration-300 ${
-            showBottomShadow ? "opacity-100" : "opacity-0"
-          }`}
-        />
+          {transactions.length > 10 && (
+            <Button variant="ghost" className="mt-2 w-full text-muted-foreground" onClick={() => navigate("/transactions")}>
+              Ver todos los movimientos
+            </Button>
+          )}
+        </section>
       </div>
 
-      {/* Buttom to add transaction */}
-      <FABButton onClick={() => setIsAddModalOpen(true)} />
+      <EditTransactionModal isOpen={isEditModalOpen} onClose={handleCloseEditModal} transaction={selectedTransaction} />
 
-      <AddTransactionModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-      />
+      {/* Menú lateral */}
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+        <SheetContent side="left" className="flex flex-col">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2 text-left text-xl tracking-[-0.03em]">
+              <FinwatLogo size={26} />
+              Finwat
+            </SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 space-y-1 py-6">
+            <p className="eyebrow px-3 pb-2 text-muted-foreground">Secciones</p>
+            {[
+              { icon: Bell, label: "Recordatorios", path: "/reminders" },
+              { icon: DollarSign, label: "Préstamos", path: "/loans" },
+              { icon: TrendingUp, label: "Inversiones con gestores", path: "/investments" },
+            ].map((item) => (
+              <button
+                key={item.path}
+                type="button"
+                onClick={() => go(item.path)}
+                className="flex h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-[15px] transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary text-primary-foreground dark:bg-brand-soft dark:text-brand">
+                  <item.icon className="h-4 w-4" />
+                </span>
+                {item.label}
+              </button>
+            ))}
+            {[
+              { icon: FileText, label: "Reportes" },
+              { icon: Users, label: "Deudas compartidas" },
+              { icon: Target, label: "Metas de ahorro" },
+            ].map((item) => (
+              <div key={item.label} className="flex h-12 items-center gap-3 rounded-xl px-3 text-[15px] text-muted-foreground" aria-disabled="true">
+                <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-muted">
+                  <item.icon className="h-4 w-4" />
+                </span>
+                {item.label}
+                <span className="eyebrow ml-auto rounded-full bg-muted px-2 py-0.5 text-[9px]">Pronto</span>
+              </div>
+            ))}
+          </div>
+          <div className="space-y-2 border-t border-border pt-4">
+            <Button variant="outline" className="w-full justify-start" onClick={() => window.location.reload()}>
+              <RefreshCcw className="h-4 w-4" /> Recargar datos
+            </Button>
+            <Button variant="ghost" className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={logout}>
+              <LogOut className="h-4 w-4" /> Cerrar sesión
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <AddTransactionModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      {accountSheetOpen && <AccountSheet open onOpenChange={(o) => !o && setAccountSheetOpen(false)} account={null} />}
       <OnboardingModal />
     </div>
   );
